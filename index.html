@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecmic · Ders kaydı, canlı çeviri, notlar</title>
+<meta name="description" content="Ders kaydı, canlı çeviri, notlar. Hepsi tek yerde. İngilizce dersi dinlerken Türkçesini anında oku.">
+<link rel="canonical" href="https://lecmic.whyasaf.com/">
+<!-- link paylaşınca çıkan önizleme -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Lecmic">
+<meta property="og:url" content="https://lecmic.whyasaf.com/">
+<meta property="og:title" content="Lecmic · Ders kaydı, canlı çeviri, notlar">
+<meta property="og:description" content="Hepsi tek yerde. İngilizce dersi dinlerken Türkçesini anında oku.">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:image" content="https://lecmic.whyasaf.com/icons/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Lecmic: üstte İngilizce transkript, altta Türkçe çevirisi">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lecmic · Ders kaydı, canlı çeviri, notlar">
+<meta name="twitter:description" content="Hepsi tek yerde. İngilizce dersi dinlerken Türkçesini anında oku.">
+<meta name="twitter:image" content="https://lecmic.whyasaf.com/icons/og.jpg">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#3b6cf5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lecmic">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app" data-mtab="trans">
+  <aside id="side">
+    <div class="brand" id="brand" title="Paneli aç/kapat"><img src="icons/icon.svg" alt="" width="32" height="32"><span>Lecmic</span></div>
+    <div class="side-head">
+      <h2>Dersler</h2>
+      <button class="btn primary sm" id="newLesson" title="Yeni ders"><span class="plus">+</span><span class="lbl"> Yeni ders</span></button>
+    </div>
+    <div id="lessonList"></div>
+    <div class="side-foot">Her ders kendi transkripti, notları, kelimeleri ve ses kaydıyla bu tarayıcıda saklanır.</div>
+  </aside>
+
+  <div id="content">
+    <header id="top">
+      <button class="icon" id="sideToggle" title="Dersler panelini aç/kapat  ( [ )">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <input type="text" id="title" class="title" placeholder="Ders adı" title="Ders adını değiştirmek için tıkla">
+      <span class="spacer"></span>
+
+      <div class="menu">
+        <button class="btn" id="langBtn" title="Dil ve görünüm ayarları"><span id="langLabel">EN</span><span class="caret">&#9662;</span></button>
+        <div class="pop form" id="setPop" hidden>
+          <div class="row"><label for="src">Konuşulan dil</label>
+            <select id="src" title="Derste konuşulan dil"><option value="en">English</option><option value="tr">Türkçe</option></select></div>
+          <div class="row"><label><input type="checkbox" id="trToggle"> Çeviri</label>
+            <select id="lang" title="Çeviri dili"></select></div>
+          <div class="row"><label>Çeviri motoru</label><span class="pill" id="engine">...</span></div>
+          <hr>
+          <div class="row"><label for="ui">Arayüz dili</label>
+            <select id="ui" title="Arayüz dili"><option value="tr">Türkçe</option><option value="en">English</option></select></div>
+          <div class="row"><label>Yazı boyutu</label>
+            <span><button class="btn sm" id="fsMinus" title="Küçült ( - )">A-</button> <button class="btn sm" id="fsPlus" title="Büyüt ( + )">A+</button></span></div>
+          <div class="row"><label>Tema</label><button class="btn sm" id="theme">Açık / koyu</button></div>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="btn" id="exportBtn">Dosya<span class="caret">&#9662;</span></button>
+        <div class="pop list" id="exportMenu" hidden>
+          <button id="docOpen">Belge aç (PDF / Word)...</button>
+          <button id="impBtn">Ses dosyasından transkript çıkar...</button>
+          <hr>
+          <button data-exp="notesdoc">Sadece notlar (.doc)</button>
+          <button data-exp="notestxt">Sadece notlar (.txt)</button>
+          <hr>
+          <button data-exp="doc">Tüm ders: Word (.doc)</button>
+          <button data-exp="pdf">Tüm ders: PDF olarak kaydet</button>
+          <button data-exp="txt">Tüm ders: düz metin (.txt)</button>
+          <button data-exp="mp3">Ses kaydını indir (.mp3)</button>
+          <hr>
+          <button id="bkLite">Yedekle (sadece yazılar)</button>
+          <button id="bkFull">Yedekle (sesle birlikte)</button>
+          <button id="bkRestore">Yedekten geri yükle...</button>
+        </div>
+      </div>
+      <button class="icon" id="help" title="Klavye kısayolları"><b>?</b></button>
+    </header>
+
+    <div id="banner" hidden>
+      <span id="bannerText"></span>
+      <button class="btn sm primary" id="recGet">Kurtar</button>
+      <button class="btn sm" id="recDel">Sil</button>
+    </div>
+
+    <nav id="mtabs">
+      <button data-mtab="trans" class="on">Transkript</button>
+      <button data-mtab="notes">Notlar</button>
+      <button data-mtab="vocab">Kelimeler</button>
+      <button data-mtab="sum">Özet</button>
+      <button data-mtab="marks">İşaretler</button>
+    </nav>
+
+    <main id="main">
+      <section id="left">
+        <div class="panel" id="enPanel">
+          <header>
+            <span id="enTitle">English</span>
+            <span class="grow"></span>
+            <input type="search" id="q" placeholder="Ara  ( / )">
+            <button class="chip" id="starFilter" title="Sadece önemli işaretli cümleleri göster">Önemliler</button>
+          </header>
+          <div class="body" id="en">
+            <div id="enList"></div>
+            <div class="seg interim" id="enInt" hidden></div>
+            <div class="empty" id="enEmpty"></div>
+          </div>
+        </div>
+        <div class="split h" id="splitH" title="Sürükle"></div>
+        <div class="panel" id="trPanel">
+          <header><span id="trTitle">Türkçe</span></header>
+          <div class="body" id="tr">
+            <div id="trList"></div>
+            <div class="seg interim" id="trInt" hidden></div>
+          </div>
+        </div>
+        <div class="panel" id="docPanel">
+          <header>
+            <span class="docname" id="docName"></span>
+            <span class="grow"></span>
+            <label id="docHoverL"><input type="checkbox" id="docHover"> Kelime anlamı (üstüne gelince)</label>
+            <button class="icon sm" id="docMinus" title="Küçült">&minus;</button>
+            <button class="icon sm" id="docPlus" title="Büyüt">+</button>
+            <button class="chip" id="docFit" title="Genişliğe sığdır">Sığdır</button>
+            <span class="pgnav"><input type="text" id="docPage" size="3" inputmode="numeric"> / <span id="docTotal">0</span></span>
+          </header>
+          <div class="body docbody" id="docBody"><div id="docPages"></div></div>
+          <div id="selbar" hidden></div>
+        </div>
+        <button class="btn primary sm" id="live" hidden>Canlıya dön &#8595;</button>
+      </section>
+
+      <div class="split v" id="splitV" title="Sürükle"></div>
+
+      <section class="panel" id="right">
+        <div class="tabs">
+          <button class="tab on" data-tab="notes">Notlar</button>
+          <button class="tab" data-tab="vocab">Kelimeler <span id="vCount"></span></button>
+          <button class="tab" data-tab="sum">Özet</button>
+          <button class="tab" data-tab="marks">İşaretler <span id="mkCount"></span></button>
+          <span class="count" id="count"></span>
+        </div>
+        <div class="pane" id="paneNotes">
+          <div class="tools" id="tools">
+            <select data-block title="Paragraf stili">
+              <option value="p">Normal</option><option value="h1">Başlık 1</option>
+              <option value="h2">Başlık 2</option><option value="h3">Başlık 3</option>
+            </select>
+            <span class="sep"></span>
+            <button data-cmd="bold" title="Kalın (Ctrl+B)"><b>B</b></button>
+            <button data-cmd="italic" title="İtalik (Ctrl+I)"><i>I</i></button>
+            <button data-cmd="underline" title="Altı çizili (Ctrl+U)"><u>U</u></button>
+            <button data-cmd="strikeThrough" title="Üstü çizili"><s>S</s></button>
+            <button data-hl title="Vurgula"><span class="hlA">A</span></button>
+            <span class="sep"></span>
+            <button data-cmd="insertUnorderedList" title="Madde işaretli liste">Liste</button>
+            <button data-cmd="insertOrderedList" title="Numaralı liste">1. Liste</button>
+            <button data-todo title="İşaretli kutu">Kutu</button>
+            <button data-cmd="outdent" title="Girintiyi azalt">&larr;</button>
+            <button data-cmd="indent" title="Girintiyi artır">&rarr;</button>
+            <span class="sep"></span>
+            <button data-cmd="insertHorizontalRule" title="Ayırıcı çizgi">Çizgi</button>
+            <button data-time title="Saat ekle">Saat</button>
+            <button data-cmd="removeFormat" title="Biçimi temizle">Temizle</button>
+            <span class="sep"></span>
+            <button data-cmd="undo" title="Geri al">Geri</button>
+            <button data-cmd="redo" title="Yinele">İleri</button>
+          </div>
+          <div id="notes" contenteditable="true" spellcheck="true" data-placeholder="Notlarını buraya yaz. Soldaki bir cümlenin yanındaki not düğmesine basarsan cümle buraya alıntı olarak eklenir."></div>
+        </div>
+        <div class="pane" id="paneVocab" hidden>
+          <form class="vadd" id="vForm">
+            <input type="text" id="vInput" placeholder="Kelime ekle (İngilizce)" autocomplete="off">
+            <button class="btn primary sm" type="submit">Ekle</button>
+          </form>
+          <div id="vocabList"></div>
+        </div>
+        <div class="pane" id="paneSum" hidden>
+          <div class="sumbar">
+            <button class="btn primary sm" id="sumGo">Özet çıkar</button>
+            <button class="btn sm" id="sumNote">Nota ekle</button>
+            <span class="pill" id="sumEngine" hidden></span>
+          </div>
+          <div id="sumBody"></div>
+        </div>
+        <div class="pane" id="paneMarks" hidden>
+          <div id="marksList"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer id="dock">
+      <div id="recbar">
+        <button class="btn primary big" id="rec">Kaydı başlat</button>
+        <button class="btn" id="pause" disabled>Duraklat</button>
+        <span id="timer">00:00</span>
+        <span class="meter" title="Mikrofon seviyesi"><i id="meterBar"></i></span>
+        <span id="status"></span>
+      </div>
+      <div id="playerBar" hidden>
+        <select id="recSel" title="Ses kaydı"></select>
+        <button class="btn sm" id="recName" title="Seçili kaydın adını değiştir">Adlandır</button>
+        <audio id="player" controls preload="metadata"></audio>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<input type="file" id="docFile" accept=".pdf,.docx,application/pdf" hidden>
+<div id="tip" hidden></div>
+<input type="file" id="bkFile" accept=".json,application/json" hidden>
+<div id="scrim"></div>
+<div id="pop" hidden></div>
+<div id="toast"></div>
+
+<dialog id="impDlg">
+  <h3>Ses dosyasından transkript</h3>
+  <p style="color:var(--muted);font-size:13px;margin:0 0 6px">Hazır bir ders kaydını yazıya dökerim. Her şey bilgisayarında çalışır, ses internete gönderilmez. Model ilk kullanımda bir kere indirilir. Çalışırken bu sekmeyi kapatma.</p>
+  <label>Ses dosyası (mp3, m4a, wav, mp4...)</label>
+  <input type="file" id="impFile" accept="audio/*,video/*">
+  <label>Konuşma dili</label>
+  <select id="impLang"><option value="en">English</option><option value="tr">Türkçe</option></select>
+  <label>Kalite</label>
+  <select id="impQ">
+    <option value="tiny">Hızlı (küçük model, ~40 MB, daha çok hata)</option>
+    <option value="base" selected>Dengeli (~80 MB)</option>
+    <option value="small">Doğru (~250 MB, yavaş)</option>
+  </select>
+  <progress id="impProg" max="1" hidden style="width:100%;margin-top:14px"></progress>
+  <div id="impMsg" style="min-height:1.4em;margin:8px 0;font-size:14px"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn primary" id="impGo">Başlat</button>
+    <button class="btn" id="impStop" hidden>Durdur</button>
+    <button class="btn" id="impClose">Kapat</button>
+  </div>
+</dialog>
+
+<dialog id="helpDlg">
+  <h3>Klavye kısayolları</h3>
+  <table>
+    <tr><td><kbd>Boşluk</kbd></td><td>Kaydı başlat / duraklat / devam</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td><td>Kaydı başlat / bitir</td></tr>
+    <tr><td><kbd>/</kbd> ya da <kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Transkriptte ara</td></tr>
+    <tr><td><kbd>[</kbd></td><td>Dersler panelini aç/kapat</td></tr>
+    <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td>Yazıyı büyüt / küçült</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Açık pencereyi kapat</td></tr>
+  </table>
+  <p style="color:var(--muted);font-size:13px;margin:0 0 14px">Tek tuşlu kısayollar not yazarken ya da kutulara yazarken çalışmaz.
+  Bir İngilizce kelimeye tıklarsan anlamı çıkar. Cümlenin üzerine gelince oynat, önemli ve not düğmeleri görünür.</p>
+  <h3>Verilerin</h3>
+  <ul style="color:var(--muted);font-size:13px;margin:0 0 14px;padding-left:18px">
+    <li>Derslerin, notların ve ses kayıtların sadece bu tarayıcıda saklanır, kimseye gönderilmez.</li>
+    <li>Canlı transkript için ses Google'a, çeviri için metin Google ya da MyMemory'ye gider.</li>
+    <li>Tarayıcı verilerini silersen dersler de silinir. Dosya menüsünden yedek almayı unutma.</li>
+  </ul>
+  <form method="dialog"><button class="btn primary">Tamam</button></form>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/translate.js"></script>
+<script src="js/transcript.js"></script>
+<script src="js/notes.js"></script>
+<script src="js/record.js"></script>
+<script src="js/lessons.js"></script>
+<script src="js/import.js"></script>
+<script src="js/summary.js"></script>
+<script src="js/doc.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

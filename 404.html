@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sayfa bulunamadı · Lecmic</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#3b6cf5">
+<link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+<link rel="icon" type="image/png" href="/icons/icon-192.png">
+<style>
+  :root { --bg:#f3f4f8; --panel:#ffffff; --text:#1c2130; --muted:#6a7287; --line:#e2e5ee; --accent:#3b6cf5; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg:#0f121a; --panel:#181d2a; --text:#e9ecf4; --muted:#8f98ae; --line:#2a3145; --accent:#7a9dff; }
+  }
+  :root[data-theme="dark"] { --bg:#0f121a; --panel:#181d2a; --text:#e9ecf4; --muted:#8f98ae; --line:#2a3145; --accent:#7a9dff; }
+  * { box-sizing:border-box; }
+  html,body { height:100%; margin:0; }
+  body { background:var(--bg); color:var(--text); font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:grid; place-items:center; padding:24px 16px; }
+  main { width:100%; max-width:420px; text-align:center; background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:40px 28px; }
+  img { width:72px; height:72px; }
+  .code { font-size:56px; font-weight:800; letter-spacing:-2px; margin:18px 0 0; color:var(--accent); line-height:1; }
+  h1 { font-size:22px; margin:12px 0 6px; }
+  p { color:var(--muted); margin:0 0 26px; }
+  a { display:inline-block; padding:10px 20px; border-radius:10px; background:var(--accent); color:#fff; font-weight:600; text-decoration:none; }
+  a:hover { filter:brightness(1.08); }
+</style>
+<script>
+  // uygulamada seçilen temayı ve dili kullan
+  try {
+    const t = localStorage.getItem('ders-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+  } catch {}
+</script>
+</head>
+<body>
+<main>
+  <img src="/icons/icon.svg" alt="Lecmic">
+  <div class="code">404</div>
+  <h1 id="h">Sayfa bulunamadı</h1>
+  <p id="p">Aradığın sayfa yok ya da taşınmış.</p>
+  <a href="/" id="a">Lecmic'e dön</a>
+</main>
+<script>
+  try {
+    if (localStorage.getItem('ders-ui') === 'en') {
+      document.documentElement.lang = 'en'; document.title = 'Page not found · Lecmic';
+      h.textContent = 'Page not found'; p.textContent = 'This page does not exist or has moved.'; a.textContent = 'Back to Lecmic';
+    }
+  } catch {}
+</script>
+</body>
+</html>
