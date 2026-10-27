@@ -16,7 +16,7 @@ const EN = {
   'Canlıya dön ↓':'Back to live ↓',
   'Liste':'List', '1. Liste':'1. List', 'Kutu':'Checkbox', 'Çizgi':'Line', 'Saat':'Time', 'Temizle':'Clear', 'Geri':'Undo', 'İleri':'Redo', 'Ekle':'Add',
   'Başlık 1':'Heading 1', 'Başlık 2':'Heading 2', 'Başlık 3':'Heading 3',
-  'Özet çıkar':'Summarize', 'Nota ekle':'Add to notes', 'Duraklat':'Pause', 'Devam et':'Resume', 'Adlandır':'Rename', 'Kaydı başlat':'Start recording', 'Bitir':'Finish',
+  'Özet çıkar':'Summarize', 'Yeniden özetle':'Summarize again', 'Özet silinsin mi?':'Delete the summary?', 'Nota ekle':'Add to notes', 'Duraklat':'Pause', 'Devam et':'Resume', 'Adlandır':'Rename', 'Kaydı başlat':'Start recording', 'Bitir':'Finish',
   'Ses dosyasından transkript':'Transcript from an audio file',
   'Hazır bir ders kaydını yazıya dökerim. Her şey bilgisayarında çalışır, ses internete gönderilmez. Model ilk kullanımda bir kere indirilir. Çalışırken bu sekmeyi kapatma.':'I turn a ready-made lesson recording into text. Everything runs on your device and the audio is never uploaded. The model is downloaded once on first use. Do not close this tab while it works.',
   'Ses dosyası (mp3, m4a, wav, mp4...)':'Audio file (mp3, m4a, wav, mp4...)', 'Konuşma dili':'Spoken language', 'Kalite':'Quality',
@@ -42,7 +42,8 @@ const EN = {
   'Chrome (çevrimdışı)':'Chrome (offline)', 'Google (internet)':'Google (online)', "Chrome'un kendi çevirisi: sınırsız, internet gerekmez":'Chrome\'s own translation: unlimited, no internet needed',
   'Chrome yapay zekâsı':'Chrome AI', 'Yerel yöntem':'Local method', 'Defterde':'In notebook', 'Defterime ekle':'Add to my notebook', 'Söyle':'Say it',
   'Dinliyor...':'Listening...', 'Duraklatıldı':'Paused', 'Ses işleniyor...':'Processing audio...', 'Dosya okunuyor...':'Reading file...', 'Yazıya dökülüyor...':'Transcribing...',
-  'Yedek hazırlanıyor...':'Preparing backup...', 'Kayıt kurtarılıyor...':'Recovering recording...', 'Özet hazırlanıyor...':'Preparing summary...',
+  'Yedek hazırlanıyor...':'Preparing backup...', 'Kayıt kurtarılıyor...':'Recovering recording...', 'Özet hazırlanıyor...':'Preparing summary...', 'Özet çevriliyor...':'Translating the summary...',
+  'Chrome yapay zekâsı bu tarayıcıda yok':'Chrome AI is not available in this browser', 'Chrome yapay zekâsı bu cihazda kullanılamıyor':'Chrome AI is not supported on this device',
   'Mikrofon isteniyor... (Chrome izin sorarsa İzin ver)':'Asking for the microphone... (click Allow if Chrome asks)', 'Mikrofondan ses gelmiyor gibi':'No sound seems to come from the microphone',
   '(çeviri alınamadı)':'(translation failed)', '(günlük çeviri limiti doldu)':'(daily translation limit reached)', '(boş)':'(empty)',
   'Hazırsın.':'You are ready.',
@@ -78,6 +79,7 @@ const EN_PRE = [
   ['Model indiriliyor (sadece ilk seferde): %','Downloading the model (first time only): %'], ['Model yüklenemedi (internet gerekli, ilk seferde). ','Could not load the model (internet needed the first time). '],
   ['Özet modeli iniyor: %','Downloading the summary model: %'], ['Dil paketi iniyor %','Downloading language pack %'], ['Yazıya dökülüyor: %','Transcribing: %'],
   ['Bitti. Transkript derste. Atlanan bozuk parça: ','Done. The transcript is in the lesson. Broken parts skipped: '],
+  ['Çevriliyor ','Translating '], ['Bölüm ','Part '], ['Chrome yapay zekâsı hata verdi: ','Chrome AI failed: '],
   ['Transkript %','Transcript %'], ['Özetleniyor ','Summarizing '], ['İnternetten çeviri','Online translation'], ['Hata: ','Error: '], ['Kayıt ','Recording ']
 ];
 // cümlenin içinde geçen parçalar
