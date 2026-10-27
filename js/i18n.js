@@ -77,6 +77,7 @@ const EN_PRE = [
   ['Kayıt başlamadı: ','Recording failed: '], ['Mikrofon açılamadı: ','Could not open the microphone: '],
   ['Model indiriliyor (sadece ilk seferde): %','Downloading the model (first time only): %'], ['Model yüklenemedi (internet gerekli, ilk seferde). ','Could not load the model (internet needed the first time). '],
   ['Özet modeli iniyor: %','Downloading the summary model: %'], ['Dil paketi iniyor %','Downloading language pack %'], ['Yazıya dökülüyor: %','Transcribing: %'],
+  ['Bitti. Transkript derste. Atlanan bozuk parça: ','Done. The transcript is in the lesson. Broken parts skipped: '],
   ['Transkript %','Transcript %'], ['Özetleniyor ','Summarizing '], ['İnternetten çeviri','Online translation'], ['Hata: ','Error: '], ['Kayıt ','Recording ']
 ];
 // cümlenin içinde geçen parçalar

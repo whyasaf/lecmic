@@ -10,7 +10,8 @@ self.onmessage = async e => {
     if (loaded !== m.model) {
       const cb = p => { if (p.status === 'progress') self.postMessage({ type:'dl', pct:p.progress }); };
       try {
-        asr = await pipeline('automatic-speech-recognition', m.model, { device:'webgpu', dtype:{ encoder_model:'fp32', decoder_model_merged:'q4' }, progress_callback:cb });
+        // decoder q4 olunca saçma, tekrarlı ya da boş çıktı veriyor, o yüzden tam hali
+        asr = await pipeline('automatic-speech-recognition', m.model, { device:'webgpu', dtype:{ encoder_model:'fp32', decoder_model_merged:'fp32' }, progress_callback:cb });
         self.postMessage({ type:'dev', dev:'webgpu' });
       } catch (err) {
         asr = await pipeline('automatic-speech-recognition', m.model, { progress_callback:cb });
@@ -18,16 +19,48 @@ self.onmessage = async e => {
       }
       loaded = m.model;
     }
-    const sr = 16000, win = 30 * sr, audio = m.audio;
-    for (let off = 0; off < audio.length; off += win) {
-      // .en modeller task ve language kabul etmiyor
-      const opts = { return_timestamps:true };
-      if (!m.model.endsWith('.en')) { opts.task = 'transcribe'; opts.language = m.language; } // English-only models reject both
-      const out = await asr(audio.subarray(off, off + win), opts);
-      self.postMessage({ type:'part', offset:off / sr, progress:Math.min(1, (off + win) / audio.length),
-        chunks: out.chunks && out.chunks.length ? out.chunks : [{ text:out.text, timestamp:[0, null] }] });
+    const sr = 16000, F = sr / 10, audio = m.audio;
+    // her 100 ms'nin ses yüksekliği. konuşma eşiği dosyanın kendi yüksekliğine göre, kısık kayıtlar da çalışsın
+    const fr = new Float32Array(Math.ceil(audio.length / F));
+    for (let k = 0; k < fr.length; k++) {
+      const a = k * F, b = Math.min(audio.length, a + F); let s = 0;
+      for (let i = a; i < b; i++) s += audio[i] * audio[i];
+      fr[k] = Math.sqrt(s / (b - a));
     }
-    self.postMessage({ type:'done' });
+    const quiet = Math.max(.002, (Float32Array.from(fr).sort()[Math.floor(fr.length * .95)] || 0) * .08);
+    // .en modeller task ve language kabul etmiyor
+    const base = m.model.endsWith('.en') ? {} : { task:'transcribe', language:m.language };
+    // whisper takılınca aynı şeyi arka arkaya yazıyor, tek sefere indir
+    const loop = /(\\S.{0,40}?)(?:[\\s,.]+\\1){3,}/gi;
+    let off = 0, skipped = 0, last = '';
+    while (off < audio.length) {
+      // parçayı tam 30. saniyeden değil, son 5 saniyenin en sessiz anından kes ki kelime bölünmesin
+      let end = Math.min(audio.length, off + 30 * sr);
+      if (end < audio.length) {
+        let low = Infinity, cut = end;
+        for (let k = Math.floor((end - 5 * sr) / F); k < Math.floor(end / F); k++) if (fr[k] < low) { low = fr[k]; cut = k * F + F / 2; }
+        end = cut;
+      }
+      let voiced = 0;
+      for (let k = Math.floor(off / F); k < Math.ceil(end / F); k++) if (fr[k] > quiet) voiced++;
+      let chunks = [];
+      // sessiz ya da 1 saniyeden kısa parçayı modele hiç verme, orada uydurup ya da hata verip duruyor
+      if (end - off >= sr && voiced >= 5) {
+        const part = audio.subarray(off, end);
+        let out = null;
+        try { out = await asr(part, { ...base, return_timestamps:true }); }
+        catch { try { out = await asr(part, base); } catch { skipped++; } } // zaman damgasız bir daha dene, olmazsa atla
+        if (out) chunks = out.chunks && out.chunks.length ? out.chunks : [{ text:out.text, timestamp:[0, null] }];
+      }
+      chunks = chunks.map(c => ({ ...c, text:(c.text || '').replace(loop, '$1').trim() })).filter(c => {
+        const key = c.text.toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, '');
+        if (!key || key === last) return false;
+        last = key; return true;
+      });
+      self.postMessage({ type:'part', offset:off / sr, progress:end / audio.length, chunks });
+      off = end;
+    }
+    self.postMessage({ type:'done', skipped });
   } catch (err) { self.postMessage({ type:'error', message:String(err && err.message || err) }); }
 };`;
 let impWorker = null;
@@ -89,7 +122,7 @@ $('impGo').onclick = async () => {
       $('impMsg').textContent = 'Yazıya dökülüyor: %' + Math.round(m.progress * 100);
       setStatus('Transkript %' + Math.round(m.progress * 100));
     } else if (m.type === 'done') {
-      stopImport('Bitti. Transkript derste.'); toast('Transkript hazır'); $('impDlg').close();
+      stopImport('Bitti. Transkript derste.' + (m.skipped ? ' Atlanan bozuk parça: ' + m.skipped : '')); toast('Transkript hazır'); $('impDlg').close();
     } else if (m.type === 'error') stopImport('Hata: ' + m.message);
   };
   impWorker.onerror = e => stopImport('Model yüklenemedi (internet gerekli, ilk seferde). ' + (e.message || ''));
