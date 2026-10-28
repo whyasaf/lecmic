@@ -148,8 +148,8 @@ $('sumGo').onclick = async () => {
   }
   summing = false; $('sumGo').disabled = false;
 };
-$('sumDel').onclick = () => {
-  if (summing || !L().summary || !confirm(T('Özet silinsin mi?'))) return;
+$('sumDel').onclick = async () => {
+  if (summing || !L().summary || !(await ask(T('Özet silinsin mi?'), { ok:T('Sil'), danger:true }))) return;
   L().summary = null; save(); renderSummary();
 };
 $('sumNote').onclick = () => {

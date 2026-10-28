@@ -26,3 +26,5 @@ applyI18n();
 initTranslator(L().lang);
 checkRecover();
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
+// açılış ekranını kaldır. çok hızlı açılınca göz kırpmış gibi olmasın diye en az yarım saniye kalır
+setTimeout(() => { $('splash').classList.add('done'); setTimeout(() => $('splash').remove(), 400); }, Math.max(0, 600 - performance.now()));

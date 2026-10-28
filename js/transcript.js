@@ -78,6 +78,8 @@ function applyLangStyle() {
   fillLangOptions(l);
   $('enTitle').textContent = SRC[l.src || 'en'].name;
   $('trTitle').textContent = LANGS[l.lang];
+  // başlıklar büyük harfle yazılıyor. dili belirtmezsek sayfa Türkçe olduğu için English "ENGLİSH" oluyor
+  $('enTitle').lang = $('docName').lang = l.src || 'en'; $('trTitle').lang = l.lang;
   for (const id of ['trList', 'trInt']) {
     const el = $(id);
     el.dir = ur ? 'rtl' : 'ltr';

@@ -10,6 +10,8 @@ self.onmessage = async e => {
     if (loaded !== m.model) {
       const cb = p => { if (p.status === 'progress') self.postMessage({ type:'dl', pct:p.progress }); };
       try {
+        // telefonda ekran kartı modeli tam haliyle belleğe sığmıyor, sekme kapanıyor. orada küçültülmüş haliyle işlemcide çalışıyor
+        if (!m.gpu) throw 0;
         // decoder q4 olunca saçma, tekrarlı ya da boş çıktı veriyor, o yüzden tam hali
         asr = await pipeline('automatic-speech-recognition', m.model, { device:'webgpu', dtype:{ encoder_model:'fp32', decoder_model_merged:'fp32' }, progress_callback:cb });
         self.postMessage({ type:'dev', dev:'webgpu' });
@@ -64,7 +66,12 @@ self.onmessage = async e => {
   } catch (err) { self.postMessage({ type:'error', message:String(err && err.message || err) }); }
 };`;
 let impWorker = null;
-$('impBtn').onclick = () => { $('exportMenu').hidden = true; $('impLang').value = L().src || 'en'; $('impDlg').showModal(); };
+// telefonda büyük model belleği doldurup sayfayı kapatabiliyor
+function impWarn() {
+  if (!impWorker) $('impMsg').textContent = IS_MOBILE && $('impQ').value === 'small' ? 'Telefonda ve tablette "Doğru" kalite fazla bellek isteyip sayfayı kapatabilir. "Dengeli" seç.' : '';
+}
+$('impQ').onchange = impWarn;
+$('impBtn').onclick = () => { $('exportMenu').hidden = true; $('impLang').value = L().src || 'en'; impWarn(); $('impDlg').showModal(); };
 $('impClose').onclick = () => $('impDlg').close();
 $('impStop').onclick = () => stopImport('Durduruldu. Şimdiye kadarki kısım derste kaldı.');
 function stopImport(msg) {
@@ -126,5 +133,5 @@ $('impGo').onclick = async () => {
     } else if (m.type === 'error') stopImport('Hata: ' + m.message);
   };
   impWorker.onerror = e => stopImport('Model yüklenemedi (internet gerekli, ilk seferde). ' + (e.message || ''));
-  impWorker.postMessage({ model, language:SRC[src].whisper, audio }, [audio.buffer]);
+  impWorker.postMessage({ model, language:SRC[src].whisper, audio, gpu:!IS_MOBILE }, [audio.buffer]);
 };

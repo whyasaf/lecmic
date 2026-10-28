@@ -2,11 +2,32 @@
 const R = { state:'idle', startedAt:0, accum:0, stream:null, mr:null, chunks:[], recId:'', lessonId:'', recog:null, listening:false, ctx:null, analyser:null, raf:0, utterStart:null, lastSound:0 };
 const elapsed = () => R.accum + (R.state === 'rec' ? (performance.now() - R.startedAt) / 1000 : 0);
 
+// izin bilgisayarın ayarından kapalıysa nereden açılacağı
+const OS_MIC = IS_MAC ? 'Mac\'te: Sistem Ayarları → Gizlilik ve Güvenlik → Mikrofon → Google Chrome açık olmalı. Açtıktan sonra Chrome\'u kapatıp yeniden aç.'
+  : IS_WIN ? 'Windows\'ta: Ayarlar → Gizlilik ve güvenlik → Mikrofon → "Masaüstü uygulamalarının mikrofona erişmesine izin ver" açık olmalı.' : '';
+const SITE_MIC = 'Adres çubuğundaki kilit simgesine bas, Mikrofon için İzin ver seç.';
+// mikrofon açılamayınca neden ve ne yapılacağı: [başlık, açıklama]
+function micError(e) {
+  if (e.name === 'NotAllowedError' && !/system/i.test(e.message || '')) return ['Mikrofon izni verilmedi', SITE_MIC];
+  if (e.name === 'NotAllowedError' || e.name === 'NotReadableError')
+    return ['Bilgisayar mikrofonu açmaya izin vermiyor', [OS_MIC, 'Başka bir uygulama (Zoom, Meet...) mikrofonu kullanıyorsa onu kapat.'].filter(Boolean).join('\n')];
+  if (e.name === 'NotFoundError') return ['Mikrofon bulunamadı', 'Bağlı bir mikrofon görünmüyor. Kulaklık ya da harici mikrofon takılıysa çıkarıp yeniden tak.'];
+  return ['Mikrofon açılamadı: ' + e.name, OS_MIC];
+}
+// canlı transkript hataları
+const SR_ERR = {
+  'not-allowed':['Konuşma tanımaya izin yok', SITE_MIC],
+  'service-not-allowed':['Konuşma tanıma bu tarayıcıda kapalı', 'Chrome ya da Edge kullan.'],
+  'audio-capture':['Mikrofondan ses alınamıyor', 'Canlı transkript bilgisayarın varsayılan mikrofonunu kullanır. Ses ayarlarında doğru mikrofonun seçili olduğuna bak.'],
+  'network':['Konuşma tanıma sunucusuna ulaşılamadı', 'Canlı transkript internet ister. Bağlantını kontrol et.'],
+  'language-not-supported':['Bu konuşma dili desteklenmiyor', 'Üstten başka bir konuşma dili seç.']
+};
 // Chrome'un konuşma tanıması
 function makeRecog() {
   const recog = new SR();
   recog.lang = SRC[L().src || 'en'].rec; recog.continuous = true; recog.interimResults = true;
   recog.onresult = e => {
+    R.err = '';
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const t = e.results[i][0].transcript.trim();
@@ -18,7 +39,13 @@ function makeRecog() {
   };
   // Chrome arada kendiliğinden durduruyor, tekrar başlatıyoruz
   recog.onend = () => { if (R.listening && R.recog === recog) { try { recog.start(); } catch {} } };
-  recog.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') setStatus('Hata: ' + e.error); };
+  recog.onerror = e => {
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
+    const [t, s] = SR_ERR[e.error] || ['Canlı transkript hatası: ' + e.error, ''];
+    R.err = T(t); setStatus(R.err);
+    if (e.error !== 'network') R.listening = false; // izin ya da mikrofon sorunu tekrar denemekle geçmez
+    if (!R.errShown) { R.errShown = true; ask(R.err, { sub:T(s), cancel:false }); }
+  };
   return recog;
 }
 // mikrofon seviye çubuğu
@@ -57,7 +84,8 @@ function uiRec() {
 setInterval(() => {
   if (R.state === 'idle') return;
   $('timer').textContent = fmt(elapsed());
-  if (R.state === 'rec') setStatus(performance.now() - R.lastSound > 10000 ? 'Mikrofondan ses gelmiyor gibi' : 'Dinliyor...');
+  // hata varsa üstüne "Dinliyor..." yazılıp kaybolmasın
+  if (R.state === 'rec') setStatus(R.err || (performance.now() - R.lastSound > 10000 ? 'Mikrofondan ses gelmiyor gibi' : 'Dinliyor...'));
 }, 250);
 
 // kaydı başlat / duraklat / devam / bitir
@@ -76,7 +104,8 @@ async function startRecInner() {
   if (!translator) initTranslator(L().lang);
   let stream;
   try { stream = await navigator.mediaDevices.getUserMedia({ audio:true }); }
-  catch (e) { toast(e.name === 'NotAllowedError' ? 'Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver.' : 'Mikrofon açılamadı: ' + e.name); return; }
+  catch (e) { const [t, s] = micError(e); ask(T(t), { sub:T(s), cancel:false }); return; }
+  R.err = ''; R.errShown = false;
   R.lessonId = L().id; R.recId = Date.now().toString(36); R.chunks = []; R.stream = stream; R.accum = 0; R.utterStart = null;
   let seq = 0;
   const mr = new MediaRecorder(stream); R.mr = mr;
@@ -186,7 +215,7 @@ $('recGet').onclick = async () => {
   toast('Kayıt kurtarıldı ve derse eklendi');
 };
 $('recDel').onclick = async () => {
-  if (!confirm(T('Yarım kalan kayıtlar silinsin mi?'))) return;
+  if (!(await ask(T('Yarım kalan kayıtlar silinsin mi?'), { ok:T('Sil'), danger:true }))) return;
   await idbDeleteChunks(() => true); pendingChunks = null; $('banner').hidden = true;
 };
 
@@ -216,9 +245,9 @@ function refreshPlayer() {
   if (curRec) $('recSel').value = curRec.id;
   if (!curRec || !l.recs.includes(curRec)) { curRec = null; loadRec(l.recs[l.recs.length - 1]); }
 }
-$('recName').onclick = () => {
+$('recName').onclick = async () => {
   const l = L(), r = curRec || l.recs.find(x => x.id === $('recSel').value); if (!r) return;
-  const n = prompt(T('Bu kaydın adı:'), r.name || T('Kayıt ' + (l.recs.indexOf(r) + 1)));
+  const n = await ask(T('Bu kaydın adı:'), { input:r.name || T('Kayıt ' + (l.recs.indexOf(r) + 1)), ok:T('Kaydet') });
   if (n === null) return;
   r.name = n.trim() || undefined; save(); refreshPlayer();
 };

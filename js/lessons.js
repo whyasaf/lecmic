@@ -20,10 +20,10 @@ $('lessonList').addEventListener('click', e => {
   const it = e.target.closest('.lesson'); if (it && it.dataset.id !== DB.cur) switchLesson(it.dataset.id);
   if (innerWidth <= 760) setSide(false);
 });
-function deleteLesson(id) {
+async function deleteLesson(id) {
   const l = DB.lessons.find(x => x.id === id); if (!l) return;
   if (R.state !== 'idle' && R.lessonId === id) { toast('Kayıt sürerken bu ders silinemez'); return; }
-  if (!confirm(l.title + T('" silinsin mi?\nTranskript, notlar, kelimeler ve ses kaydı da silinir.'))) return;
+  if (!(await ask(T('Ders silinsin mi?'), { sub:'"' + l.title + '"\n' + T('Transkript, notlar, kelimeler ve ses kaydı da silinir.'), ok:T('Sil'), danger:true }))) return;
   l.recs.forEach(r => { idbDo('audio', 'readwrite', s => s.delete(l.id + ':' + r.id)); urlCache.delete(l.id + ':' + r.id); });
   if (l.doc) idbDo('audio', 'readwrite', s => s.delete(l.id + ':doc'));
   idbDeleteChunks(c => c.lesson === id);
@@ -87,8 +87,8 @@ $('exportMenu').addEventListener('click', async e => {
     f.srcdoc = lessonHTML();
     toast('Açılan pencerede "PDF olarak kaydet" seç');
   } else if (b.dataset.exp === 'txt') {
-    const txt = l.title + (l.marks && l.marks.length ? '\n\n' + T('İŞARETLER') + '\n' + l.marks.map(m => 's. ' + (m.p + 1) + ': ' + m.t).join('\n') : '') + (l.summary ? '\n\n' + T('ÖZET') + '\n' + l.summary.pts.map(p => '- ' + p.s).join('\n') : '') + '\n\n' + T('NOTLAR') + '\n' + notes.innerText + '\n\n' + T('KELIMELER') + '\n' + l.vocab.map(v => v.w + ' - ' + v.m).join('\n')
-      + '\n\n' + T('TRANSKRIPT') + ' (' + SRC[l.src || 'en'].name + ')\n' + l.segs.map(s => (s.star ? '* ' : '') + s.en).join('\n') + '\n\n' + T('ÇEVİRİ') + ' (' + LANGS[l.lang] + ')\n' + l.segs.map(s => s.tr || '').join('\n');
+    const txt = l.title + (l.marks && l.marks.length ? '\n\n' + T('İŞARETLER') + '\n' + l.marks.map(m => 's. ' + (m.p + 1) + ': ' + m.t).join('\n') : '') + (l.summary ? '\n\n' + T('ÖZET') + '\n' + l.summary.pts.map(p => '- ' + p.s).join('\n') : '') + '\n\n' + T('NOTLAR') + '\n' + notes.innerText + '\n\n' + T('KELİMELER') + '\n' + l.vocab.map(v => v.w + ' - ' + v.m).join('\n')
+      + '\n\n' + T('TRANSKRİPT') + ' (' + SRC[l.src || 'en'].name + ')\n' + l.segs.map(s => (s.star ? '* ' : '') + s.en).join('\n') + '\n\n' + T('ÇEVİRİ') + ' (' + LANGS[l.lang] + ')\n' + l.segs.map(s => s.tr || '').join('\n');
     download(new Blob([txt], { type:'text/plain;charset=utf-8' }), fileName() + '.txt');
   } else if (b.dataset.exp === 'mp3') {
     if (!l.recs.length) { toast('Bu derste ses kaydı yok'); return; }

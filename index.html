@@ -31,8 +31,20 @@
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="css/app.css">
+<script>
+  // açılış ekranı ilk anda doğru temada çıksın
+  try { const t = localStorage.getItem('ders-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
+  // bir hata yüzünden açılış ekranı ekranda takılı kalmasın
+  addEventListener('load', () => setTimeout(() => { const s = document.getElementById('splash'); if (s) s.classList.add('done'); }, 3000));
+</script>
 </head>
 <body>
+<div id="splash" aria-hidden="true">
+  <img src="icons/icon.svg" alt="">
+  <div class="sp-name">Lecmic</div>
+  <div class="sp-bar"><i></i></div>
+  <div class="sp-by">© whyasaf</div>
+</div>
 <div id="app" data-mtab="trans">
   <aside id="side">
     <div class="brand" id="brand" title="Paneli aç/kapat"><img src="icons/icon.svg" alt="" width="32" height="32"><span>Lecmic</span></div>
@@ -247,6 +259,16 @@
     <button class="btn primary" id="impGo">Başlat</button>
     <button class="btn" id="impStop" hidden>Durdur</button>
     <button class="btn" id="impClose">Kapat</button>
+  </div>
+</dialog>
+
+<dialog id="askDlg">
+  <h3 id="askMsg"></h3>
+  <p id="askSub" hidden></p>
+  <input type="text" id="askIn" hidden>
+  <div class="askbtns">
+    <button class="btn" id="askNo">Vazgeç</button>
+    <button class="btn primary" id="askOk">Tamam</button>
   </div>
 </dialog>
 

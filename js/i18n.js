@@ -21,7 +21,9 @@ const EN = {
   'Hazır bir ders kaydını yazıya dökerim. Her şey bilgisayarında çalışır, ses internete gönderilmez. Model ilk kullanımda bir kere indirilir. Çalışırken bu sekmeyi kapatma.':'I turn a ready-made lesson recording into text. Everything runs on your device and the audio is never uploaded. The model is downloaded once on first use. Do not close this tab while it works.',
   'Ses dosyası (mp3, m4a, wav, mp4...)':'Audio file (mp3, m4a, wav, mp4...)', 'Konuşma dili':'Spoken language', 'Kalite':'Quality',
   'Hızlı (küçük model, ~40 MB, daha çok hata)':'Fast (small model, ~40 MB, more mistakes)', 'Dengeli (~80 MB)':'Balanced (~80 MB)', 'Doğru (~250 MB, yavaş)':'Accurate (~250 MB, slow)',
-  'Başlat':'Start', 'Durdur':'Stop', 'Kapat':'Close', 'Tamam':'OK',
+  'Başlat':'Start', 'Durdur':'Stop', 'Kapat':'Close', 'Tamam':'OK', 'Mikrofon izni verilmedi':'Microphone permission was denied', 'Bilgisayar mikrofonu açmaya izin vermiyor':'Your computer does not let the browser use the microphone',
+  'Mikrofon bulunamadı':'No microphone found', 'Konuşma tanımaya izin yok':'Speech recognition is not allowed', 'Konuşma tanıma bu tarayıcıda kapalı':'Speech recognition is turned off in this browser',
+  'Mikrofondan ses alınamıyor':'No sound is coming from the microphone', 'Konuşma tanıma sunucusuna ulaşılamadı':'Could not reach the speech recognition service', 'Bu konuşma dili desteklenmiyor':'This spoken language is not supported', 'Vazgeç':'Cancel', 'Kaydet':'Save', 'Ders silinsin mi?':'Delete this lesson?', 'Transkript, notlar, kelimeler ve ses kaydı da silinir.':'Its transcript, notes, vocabulary and recording will be deleted too.',
   'Klavye kısayolları':'Keyboard shortcuts', 'Boşluk':'Space', 'Kaydı başlat / duraklat / devam':'Start / pause / resume recording', 'Kaydı başlat / bitir':'Start / finish recording',
   'ya da':'or', 'Transkriptte ara':'Search the transcript', 'Dersler panelini aç/kapat':'Show / hide the lessons panel', 'Yazıyı büyüt / küçült':'Increase / decrease text size', 'Açık pencereyi kapat':'Close the open window',
   'Verilerin':'Your data', 'Derslerin, notların ve ses kayıtların sadece bu tarayıcıda saklanır, kimseye gönderilmez.':'Your lessons, notes and recordings are stored only in this browser and are never sent anywhere.',
@@ -65,17 +67,17 @@ const EN = {
   'Konuşma dilini değiştirmek için yeni bir ders aç':'Open a new lesson to change the spoken language',
   'Bu ders zaten boş, adını yazıp başlayabilirsin':'This lesson is already empty, just name it and start',
   'Aramayla eşleşen cümle yok.':'No sentence matches the search.', 'Nota eklendi':'Added to notes', 'Özet nota eklendi':'Summary added to notes', 'Kelime defterine eklendi':'Word added to the notebook',
-  'Özet için biraz daha transkript lazım':'The summary needs a bit more transcript', 'Önce bir ses dosyası seç.':'Pick an audio file first.',
+  'Özet için biraz daha transkript lazım':'The summary needs a bit more transcript', 'Önce bir ses dosyası seç.':'Pick an audio file first.', 'Telefonda ve tablette "Doğru" kalite fazla bellek isteyip sayfayı kapatabilir. "Dengeli" seç.':'On phones and tablets the "Accurate" quality may use too much memory and close the page. Pick "Balanced".',
   'Bu dosya okunamadı. mp3, m4a, wav, webm ya da mp4 dene.':'This file could not be read. Try mp3, m4a, wav, webm or mp4.',
   'Bitti. Transkript derste.':'Done. The transcript is in the lesson.', 'Transkript hazır':'Transcript ready', 'Durduruldu. Şimdiye kadarki kısım derste kaldı.':'Stopped. What was done so far stays in the lesson.',
   'Yedek indirildi':'Backup downloaded', 'Bu dosya bir Lecmic yedeği değil':'This file is not a Lecmic backup', 'Açılan pencerede "PDF olarak kaydet" seç':'In the window that opens, choose "Save as PDF"',
   'Bu kaydın adı:':'Name of this recording:', 'Kurtarılan kayıt':'Recovered recording', 'Adsız ders':'Untitled lesson', 'Önceki ders':'Previous lesson',
-  'Transkript (kalın = önemli)':'Transcript (bold = important)', 'ÖZET':'SUMMARY', 'NOTLAR':'NOTES', 'KELIMELER':'VOCABULARY', 'TRANSKRIPT':'TRANSCRIPT', 'ÇEVİRİ':'TRANSLATION',
+  'Transkript (kalın = önemli)':'Transcript (bold = important)', 'ÖZET':'SUMMARY', 'NOTLAR':'NOTES', 'KELİMELER':'VOCABULARY', 'TRANSKRİPT':'TRANSCRIPT', 'ÇEVİRİ':'TRANSLATION',
 };
 // baştan eşleşenler
 const EN_PRE = [
   ['Belge açılamadı: ','Could not open the document: '],
-  ['Kayıt başlamadı: ','Recording failed: '], ['Mikrofon açılamadı: ','Could not open the microphone: '],
+  ['Kayıt başlamadı: ','Recording failed: '], ['Canlı transkript hatası: ','Live transcript error: '], ['Mikrofon açılamadı: ','Could not open the microphone: '],
   ['Model indiriliyor (sadece ilk seferde): %','Downloading the model (first time only): %'], ['Model yüklenemedi (internet gerekli, ilk seferde). ','Could not load the model (internet needed the first time). '],
   ['Özet modeli iniyor: %','Downloading the summary model: %'], ['Dil paketi iniyor %','Downloading language pack %'], ['Yazıya dökülüyor: %','Transcribing: %'],
   ['Bitti. Transkript derste. Atlanan bozuk parça: ','Done. The transcript is in the lesson. Broken parts skipped: '],
@@ -84,12 +86,20 @@ const EN_PRE = [
 ];
 // cümlenin içinde geçen parçalar
 const EN_SUB = [
+  ["Mac'te: Sistem Ayarları → Gizlilik ve Güvenlik → Mikrofon → Google Chrome açık olmalı. Açtıktan sonra Chrome'u kapatıp yeniden aç.","On Mac: System Settings → Privacy & Security → Microphone → Google Chrome must be on. Then quit and reopen Chrome."],
+  ["Windows'ta: Ayarlar → Gizlilik ve güvenlik → Mikrofon → \"Masaüstü uygulamalarının mikrofona erişmesine izin ver\" açık olmalı.","On Windows: Settings → Privacy & security → Microphone → \"Let desktop apps access your microphone\" must be on."],
+  ['Adres çubuğundaki kilit simgesine bas, Mikrofon için İzin ver seç.','Click the lock icon in the address bar and set Microphone to Allow.'],
+  ['Başka bir uygulama (Zoom, Meet...) mikrofonu kullanıyorsa onu kapat.','If another app (Zoom, Meet...) is using the microphone, close it.'],
+  ['Bağlı bir mikrofon görünmüyor. Kulaklık ya da harici mikrofon takılıysa çıkarıp yeniden tak.','No connected microphone was found. If you use a headset or external mic, unplug it and plug it back in.'],
+  ['Chrome ya da Edge kullan.','Use Chrome or Edge.'],
+  ['Canlı transkript bilgisayarın varsayılan mikrofonunu kullanır. Ses ayarlarında doğru mikrofonun seçili olduğuna bak.','The live transcript uses your computer\'s default microphone. Check that the right one is selected in the sound settings.'],
+  ['Canlı transkript internet ister. Bağlantını kontrol et.','The live transcript needs internet. Check your connection.'],
+  ['Üstten başka bir konuşma dili seç.','Pick another spoken language at the top.'],
   [' - Chrome bu dil için: ',' - Chrome for this language: '], [' - bu tarayıcıda yerleşik çeviri yok',' - no built-in translation in this browser'],
   [' (ekran kartı kullanılamadı, yavaş modda)',' (GPU unavailable, slow mode)'], ['Yazıya dökülüyor...','Transcribing...'],
   [' cümle',' sentences'], [' işaret',' highlights'], [' · ses',' · audio'], [' kelime',' words'],
   [' ders eklendi',' lessons added'], [' tanesi zaten vardı',' already existed'],
-  ['Yarım kalan ','Unfinished: '], [' ses kaydı bulundu (sekme kapanmış olabilir).',' audio recording(s) found (the tab may have been closed).'],
-  ['" silinsin mi?\nTranskript, notlar, kelimeler ve ses kaydı da silinir.','" - delete this lesson?\nIts transcript, notes, vocabulary and recording will be deleted too.']
+  ['Yarım kalan ','Unfinished: '], [' ses kaydı bulundu (sekme kapanmış olabilir).',' audio recording(s) found (the tab may have been closed).']
 ];
 function tEn(core) {
   if (EN[core] !== undefined) return EN[core];

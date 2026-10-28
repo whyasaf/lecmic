@@ -4,8 +4,11 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+// iPad kendini Mac gibi tanıtıyor, dokunmatik olmasından ayırıyoruz
+const IS_MOBILE = /Android|iPhone|iPad|iPod/.test(navigator.userAgent) || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1);
+const IS_MAC = /Mac/.test(navigator.platform) && !IS_MOBILE, IS_WIN = /Win/.test(navigator.platform);
 // çeviri dilleri
-const LANGS = { tr:'Türkçe', en:'English', ur:'اردو (Urdu)' };
+const LANGS = { tr:'Türkçe', en:'English', fr:'Français', es:'Español', ur:'اردو (Urdu)' };
 // konuşulan diller: tanıma dili ve whisper'daki adı
 const SRC = { en:{ name:'English', rec:'en-US', whisper:'english' }, tr:{ name:'Türkçe', rec:'tr-TR', whisper:'turkish' } };
 const fmt = s => {
@@ -22,6 +25,25 @@ const IC = {
   doc:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>',
   trash:'<svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 };
+// tarayıcının kendi confirm/prompt kutusu kurulu uygulamada (Mac) görünmeyip sayfayı kilitleyebiliyor, o yüzden kendi penceremiz.
+// input verilirse yazı kutusu çıkar ve girilen yazı döner, vazgeçilirse null. yoksa true/false döner
+function ask(msg, { sub = '', input = null, ok = 'Tamam', danger = false, cancel = true } = {}) {
+  return new Promise(res => {
+    const d = $('askDlg'), inp = $('askIn');
+    $('askMsg').textContent = msg;
+    $('askSub').textContent = sub; $('askSub').hidden = !sub;
+    inp.hidden = input === null; inp.value = input || '';
+    $('askNo').hidden = !cancel;
+    $('askOk').textContent = ok; $('askOk').className = 'btn ' + (danger ? 'danger' : 'primary');
+    let yes = false;
+    $('askOk').onclick = () => { yes = true; d.close(); };
+    $('askNo').onclick = () => d.close();
+    inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('askOk').click(); } };
+    d.onclose = () => res(input === null ? yes : yes ? inp.value : null);
+    d.showModal();
+    if (input === null) $('askOk').focus(); else { inp.focus(); inp.select(); }
+  });
+}
 function toast(msg) {
   const d = document.createElement('div'); d.textContent = msg;
   $('toast').appendChild(d); setTimeout(() => d.remove(), 3600);
