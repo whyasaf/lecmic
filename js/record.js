@@ -22,6 +22,16 @@ const SR_ERR = {
   'network':['Konuşma tanıma sunucusuna ulaşılamadı', 'Canlı transkript internet ister. Bağlantını kontrol et.'],
   'language-not-supported':['Bu konuşma dili desteklenmiyor', 'Üstten başka bir konuşma dili seç.']
 };
+// mikrofon açık ama hiç ses gelmiyor
+function silentHelp() {
+  const lines = [];
+  if (R.micName) lines.push(T('Kullanılan mikrofon: ') + R.micName);
+  if (IS_MAC) lines.push(T('Mac\'te: Sistem Ayarları → Ses → Giriş\'ten bilgisayarın kendi mikrofonunu seç ve giriş düzeyini aç. Yakında bir iPhone ya da bağlı olmayan AirPods varsa o seçili kalmış olabilir.'));
+  else if (IS_WIN) lines.push(T('Windows\'ta: Ayarlar → Sistem → Ses → Giriş\'ten doğru mikrofonu seç ve sesini aç.'));
+  else lines.push(T('Cihazın ses ayarlarında doğru mikrofonun seçili ve sesinin açık olduğuna bak.'));
+  if (!IS_MOBILE) lines.push(T('Chrome\'da da aynı mikrofonu seç: adres çubuğuna chrome://settings/content/microphone yaz.'));
+  ask(T('Mikrofondan ses gelmiyor'), { sub:lines.join('\n'), cancel:false });
+}
 // Chrome'un konuşma tanıması
 function makeRecog() {
   const recog = new SR();
@@ -55,7 +65,7 @@ function setupMeter(stream) {
     const src = R.ctx.createMediaStreamSource(stream);
     R.analyser = R.ctx.createAnalyser(); R.analyser.fftSize = 512; src.connect(R.analyser);
     const buf = new Uint8Array(R.analyser.fftSize), bar = $('meterBar');
-    R.lastSound = performance.now();
+    R.lastSound = performance.now(); R.peak = 0; R.silentShown = false;
     const tick = () => {
       if (R.state === 'idle') { bar.style.width = '0%'; return; }
       R.raf = requestAnimationFrame(tick);
@@ -63,6 +73,7 @@ function setupMeter(stream) {
       R.analyser.getByteTimeDomainData(buf);
       let m = 0; for (const v of buf) m = Math.max(m, Math.abs(v - 128));
       if (m > 6) R.lastSound = performance.now();
+      R.peak = Math.max(R.peak, m);
       bar.style.width = Math.min(100, m / 128 * 170) + '%';
     };
     tick();
@@ -84,8 +95,11 @@ function uiRec() {
 setInterval(() => {
   if (R.state === 'idle') return;
   $('timer').textContent = fmt(elapsed());
-  // hata varsa üstüne "Dinliyor..." yazılıp kaybolmasın
-  if (R.state === 'rec') setStatus(R.err || (performance.now() - R.lastSound > 10000 ? 'Mikrofondan ses gelmiyor gibi' : 'Dinliyor...'));
+  if (R.state !== 'rec') return;
+  // hata varsa üstüne "Dinliyor..." yazılıp kaybolmasın. sessizlikte hangi mikrofonun dinlendiğini de yaz, yanlış cihaz seçiliyse belli olsun
+  setStatus(R.err || (performance.now() - R.lastSound > 10000 ? T('Mikrofondan ses gelmiyor gibi') + (R.micName ? ' · ' + R.micName : '') : 'Dinliyor...'));
+  // başından beri neredeyse sıfır ses: mikrofon kapalı ya da yanlış cihaz. bir kere ne yapılacağını göster
+  if (!R.silentShown && R.peak <= 2 && performance.now() - R.lastSound > 8000) { R.silentShown = true; silentHelp(); }
 }, 250);
 
 // kaydı başlat / duraklat / devam / bitir
@@ -106,6 +120,7 @@ async function startRecInner() {
   try { stream = await navigator.mediaDevices.getUserMedia({ audio:true }); }
   catch (e) { const [t, s] = micError(e); ask(T(t), { sub:T(s), cancel:false }); return; }
   R.err = ''; R.errShown = false;
+  R.micName = (stream.getAudioTracks()[0] || {}).label || '';
   R.lessonId = L().id; R.recId = Date.now().toString(36); R.chunks = []; R.stream = stream; R.accum = 0; R.utterStart = null;
   let seq = 0;
   const mr = new MediaRecorder(stream); R.mr = mr;

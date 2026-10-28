@@ -22,7 +22,7 @@ const EN = {
   'Ses dosyası (mp3, m4a, wav, mp4...)':'Audio file (mp3, m4a, wav, mp4...)', 'Konuşma dili':'Spoken language', 'Kalite':'Quality',
   'Hızlı (küçük model, ~40 MB, daha çok hata)':'Fast (small model, ~40 MB, more mistakes)', 'Dengeli (~80 MB)':'Balanced (~80 MB)', 'Doğru (~250 MB, yavaş)':'Accurate (~250 MB, slow)',
   'Başlat':'Start', 'Durdur':'Stop', 'Kapat':'Close', 'Tamam':'OK', 'Mikrofon izni verilmedi':'Microphone permission was denied', 'Bilgisayar mikrofonu açmaya izin vermiyor':'Your computer does not let the browser use the microphone',
-  'Mikrofon bulunamadı':'No microphone found', 'Konuşma tanımaya izin yok':'Speech recognition is not allowed', 'Konuşma tanıma bu tarayıcıda kapalı':'Speech recognition is turned off in this browser',
+  'Mikrofon bulunamadı':'No microphone found', 'Mikrofondan ses gelmiyor':'No sound from the microphone', 'Konuşma tanımaya izin yok':'Speech recognition is not allowed', 'Konuşma tanıma bu tarayıcıda kapalı':'Speech recognition is turned off in this browser',
   'Mikrofondan ses alınamıyor':'No sound is coming from the microphone', 'Konuşma tanıma sunucusuna ulaşılamadı':'Could not reach the speech recognition service', 'Bu konuşma dili desteklenmiyor':'This spoken language is not supported', 'Vazgeç':'Cancel', 'Kaydet':'Save', 'Ders silinsin mi?':'Delete this lesson?', 'Transkript, notlar, kelimeler ve ses kaydı da silinir.':'Its transcript, notes, vocabulary and recording will be deleted too.',
   'Klavye kısayolları':'Keyboard shortcuts', 'Boşluk':'Space', 'Kaydı başlat / duraklat / devam':'Start / pause / resume recording', 'Kaydı başlat / bitir':'Start / finish recording',
   'ya da':'or', 'Transkriptte ara':'Search the transcript', 'Dersler panelini aç/kapat':'Show / hide the lessons panel', 'Yazıyı büyüt / küçült':'Increase / decrease text size', 'Açık pencereyi kapat':'Close the open window',
@@ -77,7 +77,7 @@ const EN = {
 // baştan eşleşenler
 const EN_PRE = [
   ['Belge açılamadı: ','Could not open the document: '],
-  ['Kayıt başlamadı: ','Recording failed: '], ['Canlı transkript hatası: ','Live transcript error: '], ['Mikrofon açılamadı: ','Could not open the microphone: '],
+  ['Kayıt başlamadı: ','Recording failed: '], ['Mikrofondan ses gelmiyor gibi','No sound seems to come from the microphone'], ['Canlı transkript hatası: ','Live transcript error: '], ['Mikrofon açılamadı: ','Could not open the microphone: '],
   ['Model indiriliyor (sadece ilk seferde): %','Downloading the model (first time only): %'], ['Model yüklenemedi (internet gerekli, ilk seferde). ','Could not load the model (internet needed the first time). '],
   ['Özet modeli iniyor: %','Downloading the summary model: %'], ['Dil paketi iniyor %','Downloading language pack %'], ['Yazıya dökülüyor: %','Transcribing: %'],
   ['Bitti. Transkript derste. Atlanan bozuk parça: ','Done. The transcript is in the lesson. Broken parts skipped: '],
@@ -86,6 +86,11 @@ const EN_PRE = [
 ];
 // cümlenin içinde geçen parçalar
 const EN_SUB = [
+  ['Kullanılan mikrofon: ','Microphone in use: '],
+  ["Mac'te: Sistem Ayarları → Ses → Giriş'ten bilgisayarın kendi mikrofonunu seç ve giriş düzeyini aç. Yakında bir iPhone ya da bağlı olmayan AirPods varsa o seçili kalmış olabilir.","On Mac: in System Settings → Sound → Input, pick the built-in microphone and turn up the input volume. A nearby iPhone or disconnected AirPods may still be selected."],
+  ["Windows'ta: Ayarlar → Sistem → Ses → Giriş'ten doğru mikrofonu seç ve sesini aç.","On Windows: in Settings → System → Sound → Input, pick the right microphone and turn its volume up."],
+  ['Cihazın ses ayarlarında doğru mikrofonun seçili ve sesinin açık olduğuna bak.','Check that the right microphone is selected and its volume is up in your device sound settings.'],
+  ["Chrome'da da aynı mikrofonu seç: adres çubuğuna chrome://settings/content/microphone yaz.","Pick the same microphone in Chrome too: type chrome://settings/content/microphone in the address bar."],
   ["Mac'te: Sistem Ayarları → Gizlilik ve Güvenlik → Mikrofon → Google Chrome açık olmalı. Açtıktan sonra Chrome'u kapatıp yeniden aç.","On Mac: System Settings → Privacy & Security → Microphone → Google Chrome must be on. Then quit and reopen Chrome."],
   ["Windows'ta: Ayarlar → Gizlilik ve güvenlik → Mikrofon → \"Masaüstü uygulamalarının mikrofona erişmesine izin ver\" açık olmalı.","On Windows: Settings → Privacy & security → Microphone → \"Let desktop apps access your microphone\" must be on."],
   ['Adres çubuğundaki kilit simgesine bas, Mikrofon için İzin ver seç.','Click the lock icon in the address bar and set Microphone to Allow.'],
