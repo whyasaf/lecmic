@@ -1,12 +1,30 @@
-// sol panel: dersler
-function renderLessons() {
-  const list = [...DB.lessons].sort((a, b) => b.created - a.created);
-  $('lessonList').innerHTML = list.map((l, i) =>
-    '<div class="lesson' + (l.id === DB.cur ? ' on' : '') + '" data-id="' + l.id + '" title="' + esc(l.title) + '"><div class="lb">' + (l.kind === 'doc' ? IC.doc : l.recs.length ? IC.mic : IC.book) + '</div><div class="lt"><div class="ln">' + esc(l.title) + '</div><div class="lm">'
+// sol panel: dersler. bir dersin altında belgeleri ve kayıtları ağaç gibi durur
+const byNew = (a, b) => b.created - a.created;
+const folderOf = id => DB.folders.find(f => f.id === id);
+function itemHTML(l) {
+  return '<div class="lesson' + (l.id === DB.cur ? ' on' : '') + '" draggable="true" data-id="' + l.id + '" title="' + esc(l.title) + '"><div class="lb">' + (l.kind === 'doc' ? IC.doc : l.recs.length ? IC.mic : IC.book) + '</div><div class="lt"><div class="ln">' + esc(l.title) + '</div><div class="lm">'
     + new Date(l.created).toLocaleDateString(LOC(), { day:'numeric', month:'short' }) + ' · ' + (l.kind === 'doc' ? (l.marks || []).length + ' işaret' : l.segs.length + ' cümle' + (l.recs.length ? ' · ses' : ''))
-    + '</div></div><button class="icon sm del" data-del="' + l.id + '" title="Dersi sil">' + IC.trash + '</button></div>'
-  ).join('');
+    + '</div></div><button class="icon sm del" data-move="' + l.id + '" title="Derse taşı">' + IC.move + '</button><button class="icon sm del" data-del="' + l.id + '" title="' + (l.folder ? 'Sil' : 'Dersi sil') + '">' + IC.trash + '</button></div>';
 }
+function folderHTML(f) {
+  const kids = DB.lessons.filter(l => l.folder === f.id).sort((a, b) => a.created - b.created);
+  const docs = kids.filter(l => l.kind === 'doc').length, recs = kids.length - docs, en = UI === 'en';
+  const meta = !kids.length ? (en ? 'empty' : 'boş') : [docs && docs + (en ? ' doc' + (docs > 1 ? 's' : '') : ' belge'), recs && recs + (en ? ' recording' + (recs > 1 ? 's' : '') : ' kayıt')].filter(Boolean).join(' · ');
+  return '<div class="folder' + (f.open ? ' open' : '') + '" data-fid="' + f.id + '">'
+    + '<div class="lesson frow' + (kids.some(l => l.id === DB.cur) ? ' has-cur' : '') + '" title="' + esc(f.title) + '"><span class="chev">' + IC.chev + '</span><div class="lb">' + IC.folder + '</div><div class="lt"><div class="ln">' + esc(f.title) + '</div><div class="lm">' + meta + '</div></div>'
+    + '<button class="icon sm fa" data-add="' + f.id + '" title="Bu derse ekle">' + IC.plus + '</button>'
+    + '<button class="icon sm del" data-ren="' + f.id + '" title="Adını değiştir">' + IC.pen + '</button>'
+    + '<button class="icon sm del" data-fdel="' + f.id + '" title="Dersi sil">' + IC.trash + '</button></div>'
+    + (f.open ? '<div class="kids">' + (kids.length ? kids.map(itemHTML).join('') : '<button class="fempty" data-add="' + f.id + '">+ PDF ya da kayıt ekle</button>') + '</div>' : '') + '</div>';
+}
+function renderLessons() {
+  const loose = DB.lessons.filter(l => !folderOf(l.folder));
+  $('lessonList').innerHTML = [...DB.folders, ...loose].sort(byNew).map(x => DB.folders.includes(x) ? folderHTML(x) : itemHTML(x)).join('');
+  // başlığın yanında hangi dersin içinde olduğu
+  const f = L() && folderOf(L().folder);
+  $('crumb').hidden = !f; $('crumb').textContent = f ? f.title : '';
+}
+$('crumb').onclick = () => { const f = folderOf(L().folder); if (f) { f.open = true; save(); setSide(true); renderLessons(); } };
 function switchLesson(id, force) {
   if (!force && R.state !== 'idle') { toast('Önce kaydı bitir, sonra derse geç'); return; }
   saveNow(); DB.cur = id; curRec = null; playingIdx = -1;
@@ -15,30 +33,133 @@ function switchLesson(id, force) {
   if (translatorKey !== (L().src || 'en') + '>' + L().lang) initTranslator();
 }
 $('lessonList').addEventListener('click', e => {
-  const del = e.target.closest('[data-del]');
-  if (del) { deleteLesson(del.dataset.del); return; }
+  const b = e.target.closest('[data-add],[data-ren],[data-fdel],[data-del],[data-move]');
+  if (b) {
+    const d = b.dataset;
+    if (d.add) addMenu(b, d.add); else if (d.ren) renameFolder(d.ren); else if (d.fdel) deleteFolder(d.fdel);
+    else if (d.del) deleteLesson(d.del); else moveMenu(b, d.move);
+    return;
+  }
+  const fr = e.target.closest('.frow');
+  if (fr) {
+    const f = folderOf(fr.parentElement.dataset.fid);
+    // dar panelde alttakiler görünmüyor, paneli açıp dersi aç
+    if ($('app').classList.contains('side-closed')) { f.open = true; setSide(true); } else f.open = !f.open;
+    save(); renderLessons(); return;
+  }
   const it = e.target.closest('.lesson'); if (it && it.dataset.id !== DB.cur) switchLesson(it.dataset.id);
   if (innerWidth <= 760) setSide(false);
 });
-async function deleteLesson(id) {
+
+// küçük açılır menü (+ ve taşı düğmeleri için). items: [html, iş, seçili mi]
+function popMenu(btn, items) {
+  const m = $('fMenu');
+  m.innerHTML = items.map((x, i) => '<button data-i="' + i + '"' + (x[2] ? ' class="on"' : '') + '>' + x[0] + '</button>').join('');
+  m.onclick = e => { const b = e.target.closest('button'); if (!b) return; m.hidden = true; items[b.dataset.i][1](); };
+  m.hidden = false;
+  const r = btn.getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(r.left, innerWidth - m.offsetWidth - 8)) + 'px';
+  m.style.top = (r.bottom + m.offsetHeight + 8 > innerHeight ? r.top - m.offsetHeight - 4 : r.bottom + 4) + 'px';
+}
+document.addEventListener('click', e => { if (!e.target.closest('#fMenu,[data-add],[data-move]')) $('fMenu').hidden = true; });
+
+// yeni eklenecek şeyin gideceği ders: + menüsünden seçilen, yoksa açık olanın dersi
+let addTo = null;
+function targetFolder() { const f = addTo !== null ? addTo : L().folder; addTo = null; return folderOf(f) ? f : undefined; }
+// açık sayfa boşsa onu kullan, değilse yenisini aç
+function freshItem(fid) {
+  let l = L();
+  if (l.kind === 'doc' || l.segs.length || l.notes || l.recs.length) { l = newLesson(); DB.lessons.push(l); }
+  if (fid) { l.folder = fid; folderOf(fid).open = true; } else delete l.folder;
+  return l;
+}
+function addMenu(btn, fid) {
+  popMenu(btn, [
+    [esc(T('PDF ya da Word ekle')), () => { addTo = fid; reattachFor = null; $('docFile').click(); }],
+    [esc(T('Yeni canlı kayıt')), () => newRecItem(fid)],
+    [esc(T('Ses dosyasından transkript')), () => { if (R.state !== 'idle') { toast('Önce kaydı bitir'); return; } addTo = fid; $('impBtn').click(); }]
+  ]);
+}
+function newRecItem(fid) {
+  if (R.state !== 'idle') { toast('Önce kaydı bitir'); return; }
+  const l = freshItem(fid);
+  l.title = (UI === 'en' ? 'Recording' : 'Kayıt') + ' - ' + stamp(); l.created = Date.now();
+  saveNow(); switchLesson(l.id, true);
+  toast(T('Hazır. Kaydı başlat\'a bas'));
+}
+function moveTo(l, fid) {
+  if (fid) { l.folder = fid; folderOf(fid).open = true; } else delete l.folder;
+  save(); renderLessons();
+}
+function moveMenu(btn, id) {
   const l = DB.lessons.find(x => x.id === id); if (!l) return;
-  if (R.state !== 'idle' && R.lessonId === id) { toast('Kayıt sürerken bu ders silinemez'); return; }
-  if (!(await ask(T('Ders silinsin mi?'), { sub:'"' + l.title + '"\n' + T('Transkript, notlar, kelimeler ve ses kaydı da silinir.'), ok:T('Sil'), danger:true }))) return;
+  const items = [...DB.folders].sort(byNew).map(f => ['<span class="fn">' + esc(f.title) + '</span>', () => moveTo(l, f.id), l.folder === f.id]);
+  items.push([esc(T('Hiçbir ders (tek başına)')), () => moveTo(l, null), !folderOf(l.folder)]);
+  items.push([esc(T('+ Yeni ders oluştur')), async () => { const f = await newFolder(); if (f) moveTo(l, f.id); }]);
+  popMenu(btn, items);
+}
+// bilgisayarda sürükleyip bir dersin üstüne bırakınca içine girer, boşluğa bırakınca dışarı çıkar
+let dragId = null;
+const lessonList = $('lessonList');
+const clearDrag = () => lessonList.querySelectorAll('.dragin').forEach(x => x.classList.remove('dragin'));
+lessonList.addEventListener('dragstart', e => { const it = e.target.closest('.lesson[data-id]'); if (!it) return; dragId = it.dataset.id; e.dataTransfer.effectAllowed = 'move'; });
+lessonList.addEventListener('dragover', e => {
+  if (!dragId) return;
+  e.preventDefault(); clearDrag();
+  (e.target.closest('.folder') || lessonList).classList.add('dragin');
+});
+lessonList.addEventListener('drop', e => {
+  if (!dragId) return;
+  e.preventDefault(); clearDrag();
+  const l = DB.lessons.find(x => x.id === dragId), fo = e.target.closest('.folder');
+  dragId = null;
+  if (l) moveTo(l, fo ? fo.dataset.fid : null);
+});
+lessonList.addEventListener('dragend', () => { dragId = null; clearDrag(); });
+
+async function newFolder() {
+  const name = await ask(T('Dersin adı:'), { input:'', ok:T('Oluştur') });
+  if (name === null) return null;
+  const f = { id:'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title:name.trim() || T('Adsız ders'), created:Date.now(), open:true };
+  DB.folders.push(f); saveNow(); renderLessons();
+  return f;
+}
+async function renameFolder(fid) {
+  const f = folderOf(fid); if (!f) return;
+  const n = await ask(T('Dersin adı:'), { input:f.title, ok:T('Kaydet') });
+  if (n === null) return;
+  f.title = n.trim() || f.title; save(); renderLessons();
+}
+// silme. önce sorulur, sonra dropLesson ile ses ve belge dosyalarıyla birlikte gider
+function dropLesson(l) {
   l.recs.forEach(r => { idbDo('audio', 'readwrite', s => s.delete(l.id + ':' + r.id)); urlCache.delete(l.id + ':' + r.id); });
   if (l.doc) idbDo('audio', 'readwrite', s => s.delete(l.id + ':doc'));
-  idbDeleteChunks(c => c.lesson === id);
-  DB.lessons = DB.lessons.filter(x => x.id !== id);
+  idbDeleteChunks(c => c.lesson === l.id);
+  DB.lessons = DB.lessons.filter(x => x !== l);
+}
+function afterDelete() {
   if (!DB.lessons.length) DB.lessons.push(newLesson());
-  if (DB.cur === id) { DB.cur = [...DB.lessons].sort((a, b) => b.created - a.created)[0].id; curRec = null; renderAll(); }
+  if (!L()) { DB.cur = [...DB.lessons].sort(byNew)[0].id; curRec = null; renderAll(); }
   else renderLessons();
   saveNow();
 }
-$('newLesson').onclick = () => {
-  if (R.state !== 'idle') return;
-  const cur = L();
-  if (!cur.segs.length && !cur.notes && !cur.recs.length) { $('title').focus(); $('title').select(); toast('Bu ders zaten boş, adını yazıp başlayabilirsin'); return; }
-  const n = newLesson(); DB.lessons.push(n); switchLesson(n.id);
-  $('title').focus(); $('title').select();
+async function deleteLesson(id) {
+  const l = DB.lessons.find(x => x.id === id); if (!l) return;
+  if (R.state !== 'idle' && R.lessonId === id) { toast('Kayıt sürerken bu ders silinemez'); return; }
+  if (!(await ask(T(folderOf(l.folder) ? 'Silinsin mi?' : 'Ders silinsin mi?'), { sub:'"' + l.title + '"\n' + T('Transkript, notlar, kelimeler ve ses kaydı da silinir.'), ok:T('Sil'), danger:true }))) return;
+  dropLesson(l); afterDelete();
+}
+async function deleteFolder(fid) {
+  const f = folderOf(fid); if (!f) return;
+  const kids = DB.lessons.filter(l => l.folder === fid);
+  if (R.state !== 'idle' && kids.some(l => l.id === R.lessonId)) { toast('Kayıt sürerken bu ders silinemez'); return; }
+  if (!(await ask(T('Ders silinsin mi?'), { sub:'"' + f.title + '"' + (kids.length ? '\n' + T('İçindeki belgeler ve kayıtlar da silinir') + ' (' + kids.length + ')' : ''), ok:T('Sil'), danger:true }))) return;
+  kids.forEach(dropLesson);
+  DB.folders = DB.folders.filter(x => x !== f);
+  afterDelete();
+}
+$('newLesson').onclick = async () => {
+  if (await newFolder()) toast(T('Ders açıldı. Yanındaki + ile PDF ya da kayıt ekle'));
 };
 $('title').addEventListener('input', () => { L().title = $('title').value || T('Adsız ders'); save(); renderLessons(); });
 
@@ -131,6 +252,7 @@ async function restoreBackup(file) {
     if (j.audio && j.audio[dk]) { const dblob = await (await fetch(j.audio[dk])).blob(); await idbDo('audio', 'readwrite', s => s.put(dblob, dk)); }
     DB.lessons.push(l); added++;
   }
+  for (const f of j.db.folders || []) if (!DB.folders.some(x => x.id === f.id)) DB.folders.push(f);
   saveNow(); renderLessons();
   toast(added + ' ders eklendi' + (had ? ', ' + had + ' tanesi zaten vardı' : ''));
 }

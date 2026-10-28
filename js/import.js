@@ -71,8 +71,26 @@ function impWarn() {
   if (!impWorker) $('impMsg').textContent = IS_MOBILE && $('impQ').value === 'small' ? 'Telefonda ve tablette "Doğru" kalite fazla bellek isteyip sayfayı kapatabilir. "Dengeli" seç.' : '';
 }
 $('impQ').onchange = impWarn;
+// dosya seçme kutusu: tıkla ya da sürükle bırak
+function impShowFile() {
+  const f = $('impFile').files[0];
+  $('impFname').textContent = f ? f.name : T('Dosya seç ya da buraya sürükle');
+  $('impFsize').textContent = f ? (f.size / 1048576).toFixed(1) + ' MB · ' + T('değiştirmek için tıkla') : 'mp3, m4a, wav, mp4...';
+  if (f && !impWorker) $('impMsg').textContent = '';
+}
+$('impFile').onchange = impShowFile;
+const drop = $('impDrop');
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => {
+  e.preventDefault(); drop.classList.remove('over');
+  const f = [...e.dataTransfer.files].find(f => /^(audio|video)\//.test(f.type) || /\.(mp3|m4a|wav|ogg|webm|mp4|aac|flac)$/i.test(f.name));
+  if (!f) { $('impMsg').textContent = T('Bu bir ses ya da video dosyası değil.'); return; }
+  const dt = new DataTransfer(); dt.items.add(f); $('impFile').files = dt.files; impShowFile();
+};
 $('impBtn').onclick = () => { $('exportMenu').hidden = true; $('impLang').value = L().src || 'en'; impWarn(); $('impDlg').showModal(); };
 $('impClose').onclick = () => $('impDlg').close();
+$('impDlg').addEventListener('close', () => { addTo = null; });
 $('impStop').onclick = () => stopImport('Durduruldu. Şimdiye kadarki kısım derste kaldı.');
 function stopImport(msg) {
   if (impWorker) { impWorker.terminate(); impWorker = null; }
@@ -100,8 +118,7 @@ $('impGo').onclick = async () => {
     dur = dec.duration;
   } catch { stopImport('Bu dosya okunamadı. mp3, m4a, wav, webm ya da mp4 dene.'); return; }
 
-  let lesson = L();
-  if (lesson.segs.length || lesson.notes || lesson.recs.length) { lesson = newLesson(); DB.lessons.push(lesson); }
+  const lesson = freshItem(targetFolder()); lesson.created = Date.now();
   lesson.title = file.name.replace(/\.[^.]+$/, ''); lesson.src = $('impLang').value; lsSet('ders-src', lesson.src);
   if (lesson.lang === lesson.src) lesson.lang = lesson.src === 'tr' ? 'en' : 'tr';
   const recId = 'i' + Date.now().toString(36);

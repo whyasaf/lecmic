@@ -37,7 +37,7 @@ function makeRecog() {
   const recog = new SR();
   recog.lang = SRC[L().src || 'en'].rec; recog.continuous = true; recog.interimResults = true;
   recog.onresult = e => {
-    R.err = '';
+    R.err = ''; R.fails = 0;
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const t = e.results[i][0].transcript.trim();
@@ -45,10 +45,19 @@ function makeRecog() {
       if (e.results[i].isFinal) { if (t) addSegment(t, R.utterStart); R.utterStart = null; }
       else interim += t + ' ';
     }
-    setInterim(interim.trim());
+    R.interim = interim.trim(); setInterim(R.interim);
   };
-  // Chrome arada kendiliğinden durduruyor, tekrar başlatıyoruz
-  recog.onend = () => { if (R.listening && R.recog === recog) { try { recog.start(); } catch {} } };
+  // Chrome arada kendiliğinden durduruyor. yarım kalan cümleyi kaybetmeden tekrar başlatıyoruz
+  recog.onend = () => {
+    if (R.recog !== recog) return;
+    if (R.interim && L().id === R.lessonId) addSegment(R.interim, R.utterStart ?? elapsed());
+    R.interim = ''; R.utterStart = null; setInterim('');
+    if (!R.listening) return;
+    // hemen kapanıp duruyorsa her seferinde biraz daha bekle
+    R.fails = performance.now() - R.recogAt < 2000 ? (R.fails || 0) + 1 : 0;
+    if (R.fails >= 5 && !R.err) setStatus(T('Canlı transkript kesildi, yeniden deneniyor...'));
+    setTimeout(() => startRecog(recog), Math.min(5000, R.fails * 400));
+  };
   recog.onerror = e => {
     if (e.error === 'no-speech' || e.error === 'aborted') return;
     const [t, s] = SR_ERR[e.error] || ['Canlı transkript hatası: ' + e.error, ''];
@@ -58,28 +67,36 @@ function makeRecog() {
   };
   return recog;
 }
+function startRecog(recog) {
+  if (!R.listening || R.recog !== recog) return;
+  R.recogAt = performance.now();
+  try { recog.start(); } catch { setTimeout(() => startRecog(recog), 1000); }
+}
 // mikrofon seviye çubuğu
 function setupMeter(stream) {
   try {
     R.ctx = new AudioContext();
+    // bazı cihazlarda askıda başlıyor, o zaman hep sıfır ölçer
+    R.ctx.resume().catch(() => {});
     const src = R.ctx.createMediaStreamSource(stream);
     R.analyser = R.ctx.createAnalyser(); R.analyser.fftSize = 512; src.connect(R.analyser);
     const buf = new Uint8Array(R.analyser.fftSize), bar = $('meterBar');
     R.lastSound = performance.now(); R.peak = 0; R.silentShown = false;
-    const tick = () => {
-      if (R.state === 'idle') { bar.style.width = '0%'; return; }
-      R.raf = requestAnimationFrame(tick);
+    // ekran çizimine değil zamanlayıcıya bağlı, uygulama arka plandayken de ölçmeye devam etsin
+    clearInterval(R.meterT);
+    R.meterT = setInterval(() => {
       if (R.state !== 'rec') { bar.style.width = '0%'; return; }
       R.analyser.getByteTimeDomainData(buf);
       let m = 0; for (const v of buf) m = Math.max(m, Math.abs(v - 128));
-      if (m > 6) R.lastSound = performance.now();
+      if (m > 3) R.lastSound = performance.now(); // arka sıradan kısık hoca sesi de ses sayılsın
       R.peak = Math.max(R.peak, m);
       bar.style.width = Math.min(100, m / 128 * 170) + '%';
-    };
-    tick();
+    }, 80);
   } catch {}
 }
-function stopMeter() { cancelAnimationFrame(R.raf); try { R.ctx.close(); } catch {} $('meterBar').style.width = '0%'; }
+function stopMeter() { clearInterval(R.meterT); try { R.ctx.close(); } catch {} $('meterBar').style.width = '0%'; }
+// arka plandan dönünce eski ölçümle yanlış "ses gelmiyor" demesin
+document.addEventListener('visibilitychange', () => { if (!document.hidden) R.lastSound = performance.now(); });
 
 function uiRec() {
   const b = $('rec'), p = $('pause'), idle = R.state === 'idle';
@@ -95,7 +112,7 @@ function uiRec() {
 setInterval(() => {
   if (R.state === 'idle') return;
   $('timer').textContent = fmt(elapsed());
-  if (R.state !== 'rec') return;
+  if (R.state !== 'rec' || document.hidden) return;
   // hata varsa üstüne "Dinliyor..." yazılıp kaybolmasın. sessizlikte hangi mikrofonun dinlendiğini de yaz, yanlış cihaz seçiliyse belli olsun
   setStatus(R.err || (performance.now() - R.lastSound > 10000 ? T('Mikrofondan ses gelmiyor gibi') + (R.micName ? ' · ' + R.micName : '') : 'Dinliyor...'));
   // başından beri neredeyse sıfır ses: mikrofon kapalı ya da yanlış cihaz. bir kere ne yapılacağını göster
@@ -117,11 +134,12 @@ async function startRec() {
 async function startRecInner() {
   if (!translator) initTranslator(L().lang);
   let stream;
-  try { stream = await navigator.mediaDevices.getUserMedia({ audio:true }); }
+  // ders kaydı için: gürültü bastırma uzaktaki hocanın sesini de kısıyor, kapalı. otomatik ses yükseltme açık
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:true } }); }
   catch (e) { const [t, s] = micError(e); ask(T(t), { sub:T(s), cancel:false }); return; }
   R.err = ''; R.errShown = false;
   R.micName = (stream.getAudioTracks()[0] || {}).label || '';
-  R.lessonId = L().id; R.recId = Date.now().toString(36); R.chunks = []; R.stream = stream; R.accum = 0; R.utterStart = null;
+  R.lessonId = L().id; R.recId = Date.now().toString(36); R.chunks = []; R.stream = stream; R.accum = 0; R.utterStart = null; R.interim = ''; R.fails = 0;
   let seq = 0;
   const mr = new MediaRecorder(stream); R.mr = mr;
   const lessonId = R.lessonId, recId = R.recId;
@@ -132,7 +150,7 @@ async function startRecInner() {
   };
   mr.start(5000);
   setupMeter(stream);
-  R.recog = makeRecog(); R.listening = true; try { R.recog.start(); } catch {}
+  R.recog = makeRecog(); R.listening = true; startRecog(R.recog);
   R.state = 'rec'; R.startedAt = performance.now();
   uiRec();
 }
@@ -145,7 +163,7 @@ function pauseRec() {
 function resumeRec() {
   try { R.mr.resume(); } catch {}
   R.startedAt = performance.now(); R.state = 'rec';
-  R.recog = makeRecog(); R.listening = true; try { R.recog.start(); } catch {}
+  R.recog = makeRecog(); R.listening = true; R.fails = 0; startRecog(R.recog);
   uiRec();
 }
 function stopRec() {
@@ -274,6 +292,30 @@ async function playSeg(seg) {
   player.currentTime = Math.max(0, (seg.t || 0) - 0.8);
   player.play();
 }
+// oynatıcının düğmeleri
+const seek = $('pSeek');
+let seeking = false;
+const pDur = () => isFinite(player.duration) && player.duration ? player.duration : (curRec && curRec.dur) || 0;
+function uiPlayer() {
+  const d = pDur();
+  if (!seeking) { seek.value = d ? player.currentTime / d * 1000 : 0; $('pCur').textContent = fmt(player.currentTime); }
+  $('pDur').textContent = fmt(d);
+  seek.style.setProperty('--p', seek.value / 10 + '%');
+  $('pPlay').classList.toggle('on', !player.paused);
+}
+['timeupdate', 'durationchange', 'loadedmetadata', 'play', 'pause', 'ended', 'emptied'].forEach(ev => player.addEventListener(ev, uiPlayer));
+// sürüklerken sadece göster, bırakınca atla
+seek.oninput = () => { seeking = true; seek.style.setProperty('--p', seek.value / 10 + '%'); $('pCur').textContent = fmt(seek.value / 1000 * pDur()); };
+seek.onchange = () => { seeking = false; if (pDur()) player.currentTime = seek.value / 1000 * pDur(); };
+$('pPlay').onclick = () => { if (!player.src) return; if (player.paused) player.play(); else player.pause(); };
+$('pBack').onclick = () => { player.currentTime = Math.max(0, player.currentTime - 10); };
+$('pFwd').onclick = () => { player.currentTime = Math.min(pDur(), player.currentTime + 10); };
+// yeni kayıt yüklenince hız sıfırlanmasın diye varsayılanı da ayarlanıyor
+const setRate = v => { player.defaultPlaybackRate = player.playbackRate = +v; };
+$('pRate').value = lsGet('ders-rate', '1'); setRate($('pRate').value);
+$('pRate').onchange = () => { setRate($('pRate').value); lsSet('ders-rate', $('pRate').value); };
+player.addEventListener('loadedmetadata', () => setRate($('pRate').value));
+
 player.addEventListener('timeupdate', () => {
   if (!curRec) return;
   const segs = L().segs, t = player.currentTime + 0.3;

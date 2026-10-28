@@ -19,7 +19,7 @@ const EN = {
   'Özet çıkar':'Summarize', 'Yeniden özetle':'Summarize again', 'Özet silinsin mi?':'Delete the summary?', 'Nota ekle':'Add to notes', 'Duraklat':'Pause', 'Devam et':'Resume', 'Adlandır':'Rename', 'Kaydı başlat':'Start recording', 'Bitir':'Finish',
   'Ses dosyasından transkript':'Transcript from an audio file',
   'Hazır bir ders kaydını yazıya dökerim. Her şey bilgisayarında çalışır, ses internete gönderilmez. Model ilk kullanımda bir kere indirilir. Çalışırken bu sekmeyi kapatma.':'I turn a ready-made lesson recording into text. Everything runs on your device and the audio is never uploaded. The model is downloaded once on first use. Do not close this tab while it works.',
-  'Ses dosyası (mp3, m4a, wav, mp4...)':'Audio file (mp3, m4a, wav, mp4...)', 'Konuşma dili':'Spoken language', 'Kalite':'Quality',
+  'Ses dosyası (mp3, m4a, wav, mp4...)':'Audio file (mp3, m4a, wav, mp4...)', 'Konuşma dili':'Spoken language', 'Dosya seç ya da buraya sürükle':'Choose a file or drop it here', 'değiştirmek için tıkla':'click to change', 'Bu bir ses ya da video dosyası değil.':'This is not an audio or video file.', '10 sn geri':'Back 10 s', '10 sn ileri':'Forward 10 s', 'Oynat / durdur':'Play / pause', 'Kayıtta ilerle':'Seek', 'Dinleme hızı':'Playback speed', 'Kalite':'Quality',
   'Hızlı (küçük model, ~40 MB, daha çok hata)':'Fast (small model, ~40 MB, more mistakes)', 'Dengeli (~80 MB)':'Balanced (~80 MB)', 'Doğru (~250 MB, yavaş)':'Accurate (~250 MB, slow)',
   'Başlat':'Start', 'Durdur':'Stop', 'Kapat':'Close', 'Tamam':'OK', 'Mikrofon izni verilmedi':'Microphone permission was denied', 'Bilgisayar mikrofonu açmaya izin vermiyor':'Your computer does not let the browser use the microphone',
   'Mikrofon bulunamadı':'No microphone found', 'Mikrofondan ses gelmiyor':'No sound from the microphone', 'Konuşma tanımaya izin yok':'Speech recognition is not allowed', 'Konuşma tanıma bu tarayıcıda kapalı':'Speech recognition is turned off in this browser',
@@ -32,7 +32,7 @@ const EN = {
   'Tek tuşlu kısayollar not yazarken ya da kutulara yazarken çalışmaz. Bir İngilizce kelimeye tıklarsan anlamı çıkar. Cümlenin üzerine gelince oynat, önemli ve not düğmeleri görünür.':'Single-key shortcuts do not work while you type in notes or text boxes. Click a word to see its meaning. Hover a sentence to get the play, star and note buttons.',
   'Henüz kelime yok. Soldaki metinde bir kelimeye tıkla, "Defterime ekle" de. Ya da yukarıdan kendin yaz.':'No words yet. Click a word in the text on the left and press "Add to my notebook", or type one above.',
   'Dersin transkriptinden önemli noktaları çıkarır. Önemli diye yıldızladığın cümleler daha çok öne çıkar. Önce biraz transkript olmalı.':'Pulls the key points out of the lesson transcript. Sentences you starred count for more. There must be some transcript first.',
-  'Dersi sil':'Delete lesson', 'Dersler panelini aç/kapat ( [ )':'Show / hide lessons ( [ )', 'Ders adını değiştirmek için tıkla':'Click to rename the lesson', 'Ders adı':'Lesson name',
+  'Dersi sil':'Delete lesson', 'Derse taşı':'Move to a lesson', 'Bu derse ekle':'Add to this lesson', 'Adını değiştir':'Rename', 'PDF ya da Word ekle':'Add PDF or Word', 'Yeni canlı kayıt':'New live recording', '+ PDF ya da kayıt ekle':'+ Add a PDF or recording', 'Hiçbir ders (tek başına)':'No lesson (on its own)', '+ Yeni ders oluştur':'+ Create a new lesson', 'Dersin adı:':'Lesson name:', 'Oluştur':'Create', 'Ders açıldı. Yanındaki + ile PDF ya da kayıt ekle':'Lesson created. Use the + next to it to add PDFs or recordings', 'İçindeki belgeler ve kayıtlar da silinir':'Its documents and recordings are deleted too', 'Silinsin mi?':'Delete it?', 'Hazır. Kaydı başlat\'a bas':'Ready. Press Start recording', 'Bu belgenin ya da kaydın bulunduğu ders':'The lesson this belongs to', 'Dersler panelini aç/kapat ( [ )':'Show / hide lessons ( [ )', 'Ders adını değiştirmek için tıkla':'Click to rename the lesson', 'Ders adı':'Lesson name',
   'Dil ve görünüm ayarları':'Language and display settings', 'Derste konuşulan dil':'Language spoken in the lesson', 'Çeviri dili':'Translation language',
   'Küçült ( - )':'Smaller ( - )', 'Büyüt ( + )':'Larger ( + )', 'Ara ( / )':'Search ( / )', 'Sadece önemli işaretli cümleleri göster':'Show only starred sentences', 'Sürükle':'Drag to resize',
   'Paragraf stili':'Paragraph style', 'Kalın (Ctrl+B)':'Bold (Ctrl+B)', 'İtalik (Ctrl+I)':'Italic (Ctrl+I)', 'Altı çizili (Ctrl+U)':'Underline (Ctrl+U)', 'Üstü çizili':'Strikethrough',
@@ -46,7 +46,7 @@ const EN = {
   'Dinliyor...':'Listening...', 'Duraklatıldı':'Paused', 'Ses işleniyor...':'Processing audio...', 'Dosya okunuyor...':'Reading file...', 'Yazıya dökülüyor...':'Transcribing...',
   'Yedek hazırlanıyor...':'Preparing backup...', 'Kayıt kurtarılıyor...':'Recovering recording...', 'Özet hazırlanıyor...':'Preparing summary...', 'Özet çevriliyor...':'Translating the summary...',
   'Chrome yapay zekâsı bu tarayıcıda yok':'Chrome AI is not available in this browser', 'Chrome yapay zekâsı bu cihazda kullanılamıyor':'Chrome AI is not supported on this device',
-  'Mikrofon isteniyor... (Chrome izin sorarsa İzin ver)':'Asking for the microphone... (click Allow if Chrome asks)', 'Mikrofondan ses gelmiyor gibi':'No sound seems to come from the microphone',
+  'Mikrofon isteniyor... (Chrome izin sorarsa İzin ver)':'Asking for the microphone... (click Allow if Chrome asks)', 'Canlı transkript kesildi, yeniden deneniyor...':'Live transcript dropped, retrying...', 'Mikrofondan ses gelmiyor gibi':'No sound seems to come from the microphone',
   '(çeviri alınamadı)':'(translation failed)', '(günlük çeviri limiti doldu)':'(daily translation limit reached)', '(boş)':'(empty)',
   'Hazırsın.':'You are ready.',
   'Belge':'Document', 'Belge dili':'Document language', 'Belge aç (PDF / Word)...':'Open a document (PDF / Word)...', 'İşaretler':'Highlights', 'İŞARETLER':'HIGHLIGHTS',
@@ -102,7 +102,7 @@ const EN_SUB = [
   ['Üstten başka bir konuşma dili seç.','Pick another spoken language at the top.'],
   [' - Chrome bu dil için: ',' - Chrome for this language: '], [' - bu tarayıcıda yerleşik çeviri yok',' - no built-in translation in this browser'],
   [' (ekran kartı kullanılamadı, yavaş modda)',' (GPU unavailable, slow mode)'], ['Yazıya dökülüyor...','Transcribing...'],
-  [' cümle',' sentences'], [' işaret',' highlights'], [' · ses',' · audio'], [' kelime',' words'],
+  [' belge eklendi',' documents added'], [' cümle',' sentences'], [' işaret',' highlights'], [' · ses',' · audio'], [' kelime',' words'],
   [' ders eklendi',' lessons added'], [' tanesi zaten vardı',' already existed'],
   ['Yarım kalan ','Unfinished: '], [' ses kaydı bulundu (sekme kapanmış olabilir).',' audio recording(s) found (the tab may have been closed).']
 ];
@@ -116,7 +116,7 @@ function tEn(core) {
 const T = s => UI === 'en' ? tEn(s) : s;
 
 // kullanıcının kendi yazdığı yerler (transkript, not, ders adı) çevrilmez
-const SKIP_SEL = '#enList,#trList,#enInt,#trInt,#notes,#vocabList .vw,#vocabList .vm,#vocabList .vx,#sumBody li,#lessonList .ln,#pop .pw,#pop .pm,#tip,#selbar .sbq,#selbar .sbo,#marksList .mkt,#docName';
+const SKIP_SEL = '#enList,#trList,#enInt,#trInt,#notes,#vocabList .vw,#vocabList .vm,#vocabList .vx,#sumBody li,#lessonList .ln,#crumb,#fMenu .fn,#pop .pw,#pop .pm,#tip,#selbar .sbq,#selbar .sbo,#marksList .mkt,#docName';
 const I18N_ATTRS = ['title', 'placeholder', 'data-placeholder'];
 function i18nText(n) {
   const el = n.parentElement;

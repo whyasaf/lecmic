@@ -474,14 +474,16 @@ $('marksList').addEventListener('click', e => {
 
 // belge açma
 $('docOpen').onclick = () => { $('exportMenu').hidden = true; reattachFor = null; $('docFile').click(); };
+const docType = f => { const ext = ((f.name.match(/\.([^.]+)$/) || [])[1] || '').toLowerCase(); return ext === 'pdf' || ext === 'docx' ? ext : ''; };
+// seçim penceresi kapatılınca + menüsünden seçilen ders bir sonrakine kalmasın
+$('docFile').addEventListener('cancel', () => { addTo = null; });
 $('docFile').onchange = async () => {
-  const f = $('docFile').files[0];
+  const files = [...$('docFile').files], f = files[0];
   $('docFile').value = '';
-  if (!f) return;
-  const ext = (f.name.match(/\.([^.]+)$/) || [])[1];
-  const type = ext && ext.toLowerCase() === 'pdf' ? 'pdf' : ext && ext.toLowerCase() === 'docx' ? 'docx' : '';
-  if (!type) { toast('Sadece PDF ya da Word (.docx) açabilirim'); return; }
+  if (!f) { addTo = null; return; }
+  const type = docType(f);
   if (reattachFor) {
+    if (!type) { toast('Sadece PDF ya da Word (.docx) açabilirim'); return; }
     const l = DB.lessons.find(x => x.id === reattachFor);
     reattachFor = null;
     if (!l) return;
@@ -491,10 +493,18 @@ $('docFile').onchange = async () => {
     if (DB.cur === l.id) loadDoc();
     return;
   }
-  if (R.state !== 'idle') { toast('Önce kaydı bitir'); return; }
-  let l = L();
-  if (l.kind === 'doc' || l.segs.length || l.notes || l.recs.length) { l = newLesson(); DB.lessons.push(l); }
-  l.kind = 'doc'; l.title = f.name.replace(/\.[^.]+$/, ''); l.doc = { name:f.name, type }; l.marks = [];
-  await idbDo('audio', 'readwrite', s => s.put(f, l.id + ':doc'));
-  saveNow(); switchLesson(l.id, true);
+  if (R.state !== 'idle') { addTo = null; toast('Önce kaydı bitir'); return; }
+  // birden çok belge seçilebilir, hepsi aynı dersin altına sırayla girer
+  const fid = targetFolder(), ok = files.filter(docType);
+  if (ok.length < files.length) toast('Sadece PDF ya da Word (.docx) açabilirim');
+  let first = null;
+  for (const [i, file] of ok.entries()) {
+    const l = freshItem(fid);
+    l.kind = 'doc'; l.title = file.name.replace(/\.[^.]+$/, ''); l.doc = { name:file.name, type:docType(file) }; l.marks = []; l.created = Date.now() + i;
+    await idbDo('audio', 'readwrite', s => s.put(file, l.id + ':doc'));
+    first ||= l;
+  }
+  saveNow();
+  if (first) switchLesson(first.id, true);
+  if (ok.length > 1) toast(ok.length + T(' belge eklendi'));
 };

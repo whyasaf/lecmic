@@ -23,6 +23,11 @@ const IC = {
   mic:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6"/></svg>',
   book:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12.5 8h3.5M12.5 12h3.5"/></svg>',
   doc:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>',
+  folder:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  chev:'<svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" width="17" height="17"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  pen:'<svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>',
+  move:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M10 13h6M13.5 10.5 16 13l-2.5 2.5"/></svg>',
   trash:'<svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 };
 // tarayıcının kendi confirm/prompt kutusu kurulu uygulamada (Mac) görünmeyip sayfayı kilitleyebiliyor, o yüzden kendi penceremiz.
@@ -55,23 +60,25 @@ function download(blob, name) {
   setTimeout(() => URL.revokeObjectURL(a.href), 20000);
 }
 
-// dersler. her dersin transkripti, notu, kelimeleri ve ses kayıtları bunun içinde
+// dersler. her dersin transkripti, notu, kelimeleri ve ses kayıtları bunun içinde.
+// DB.folders: birden çok belgeyi ve kaydı bir arada tutan dersler. içindekilerin folder alanı o dersin id'si
 let DB;
-function newLesson() {
+const stamp = () => new Date().toLocaleString(LOC(), { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+function newLesson(word) {
   const d = new Date();
   return {
     id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-    title: (UI === 'en' ? 'Lesson' : 'Ders') + ' - ' + d.toLocaleString(LOC(), { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }),
+    title: (word || (UI === 'en' ? 'Lesson' : 'Ders')) + ' - ' + stamp(),
     created: d.getTime(), src: lsGet('ders-src', 'en'), lang: lsGet('ders-lang', 'tr'), segs: [], notes: '', vocab: [], recs: []
   };
 }
 function loadDB() {
-  try { const j = JSON.parse(lsGet('ders-v2', 'null')); if (j && j.lessons && j.lessons.length) return j; } catch {}
+  try { const j = JSON.parse(lsGet('ders-v2', 'null')); if (j && j.lessons && j.lessons.length) { j.folders ||= []; return j; } } catch {}
   const first = newLesson();
   try { const s = JSON.parse(lsGet('ders-segments', '[]')); if (s.length) first.segs = s; } catch {}
   const n = lsGet('ders-notes-html', ''); if (n) first.notes = n;
   if (first.segs.length || first.notes) first.title = T('Önceki ders');
-  return { lessons: [first], cur: first.id };
+  return { lessons: [first], folders: [], cur: first.id };
 }
 // açık olan ders
 const L = () => DB.lessons.find(l => l.id === DB.cur);
