@@ -6,6 +6,8 @@ const elapsed = () => R.accum + (R.state === 'rec' ? (performance.now() - R.star
 const OS_MIC = IS_MAC ? 'Mac\'te: Sistem Ayarları → Gizlilik ve Güvenlik → Mikrofon → Google Chrome açık olmalı. Açtıktan sonra Chrome\'u kapatıp yeniden aç.'
   : IS_WIN ? 'Windows\'ta: Ayarlar → Gizlilik ve güvenlik → Mikrofon → "Masaüstü uygulamalarının mikrofona erişmesine izin ver" açık olmalı.' : '';
 const SITE_MIC = 'Adres çubuğundaki kilit simgesine bas, Mikrofon için İzin ver seç.';
+// ders kaydı için: gürültü bastırma uzaktaki hocanın sesini de kısıyor, normalde kapalı (ayarlardan açılır). otomatik ses yükseltme açık
+const micConstraints = () => ({ echoCancellation:false, noiseSuppression:lsGet('ders-ns', '0') === '1', autoGainControl:true });
 // mikrofon açılamayınca neden ve ne yapılacağı: [başlık, açıklama]
 function micError(e) {
   if (e.name === 'NotAllowedError' && !/system/i.test(e.message || '')) return ['Mikrofon izni verilmedi', SITE_MIC];
@@ -22,14 +24,18 @@ const SR_ERR = {
   'network':['Konuşma tanıma sunucusuna ulaşılamadı', 'Canlı transkript internet ister. Bağlantını kontrol et.'],
   'language-not-supported':['Bu konuşma dili desteklenmiyor', 'Üstten başka bir konuşma dili seç.']
 };
-// mikrofon açık ama hiç ses gelmiyor
-function silentHelp() {
+// mikrofon açık ama hiç ses gelmiyor: ne yapılacağı
+function silentLines() {
   const lines = [];
   if (R.micName) lines.push(T('Kullanılan mikrofon: ') + R.micName);
   if (IS_MAC) lines.push(T('Mac\'te: Sistem Ayarları → Ses → Giriş\'ten bilgisayarın kendi mikrofonunu seç ve giriş düzeyini aç. Yakında bir iPhone ya da bağlı olmayan AirPods varsa o seçili kalmış olabilir.'));
   else if (IS_WIN) lines.push(T('Windows\'ta: Ayarlar → Sistem → Ses → Giriş\'ten doğru mikrofonu seç ve sesini aç.'));
   else lines.push(T('Cihazın ses ayarlarında doğru mikrofonun seçili ve sesinin açık olduğuna bak.'));
   if (!IS_MOBILE) lines.push(T('Chrome\'da da aynı mikrofonu seç: adres çubuğuna chrome://settings/content/microphone yaz.'));
+  return lines;
+}
+function silentHelp() {
+  const lines = silentLines();
   ask(T('Mikrofondan ses gelmiyor'), { sub:lines.join('\n'), cancel:false });
 }
 // Chrome'un konuşma tanıması
@@ -101,7 +107,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) R.la
 function uiRec() {
   const b = $('rec'), p = $('pause'), idle = R.state === 'idle';
   b.textContent = idle ? 'Kaydı başlat' : 'Bitir';
-  b.className = 'btn ' + (idle ? 'primary' : 'rec');
+  b.className = 'btn ' + (idle ? 'primary' : 'rec') + (R.state === 'rec' ? ' live' : '');
   p.disabled = idle; p.textContent = R.state === 'paused' ? 'Devam et' : 'Duraklat';
   $('timer').classList.toggle('live', R.state === 'rec');
   if (idle) $('timer').textContent = '00:00';
@@ -134,8 +140,7 @@ async function startRec() {
 async function startRecInner() {
   if (!translator) initTranslator(L().lang);
   let stream;
-  // ders kaydı için: gürültü bastırma uzaktaki hocanın sesini de kısıyor, kapalı. otomatik ses yükseltme açık
-  try { stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:true } }); }
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio:micConstraints() }); }
   catch (e) { const [t, s] = micError(e); ask(T(t), { sub:T(s), cancel:false }); return; }
   R.err = ''; R.errShown = false;
   R.micName = (stream.getAudioTracks()[0] || {}).label || '';

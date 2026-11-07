@@ -1,8 +1,11 @@
 // sol panel: dersler. bir dersin altında belgeleri ve kayıtları ağaç gibi durur
 const byNew = (a, b) => b.created - a.created;
 const folderOf = id => DB.folders.find(f => f.id === id);
+// yeni eklenenler bir kez kayarak gelip parlar, yeni açılan dersin altı kayarak açılır
+const freshIds = new Set();
+let justOpened = null;
 function itemHTML(l) {
-  return '<div class="lesson' + (l.id === DB.cur ? ' on' : '') + '" draggable="true" data-id="' + l.id + '" title="' + esc(l.title) + '"><div class="lb">' + (l.kind === 'doc' ? IC.doc : l.recs.length ? IC.mic : IC.book) + '</div><div class="lt"><div class="ln">' + esc(l.title) + '</div><div class="lm">'
+  return '<div class="lesson' + (l.id === DB.cur ? ' on' : '') + (freshIds.has(l.id) ? ' fresh' : '') + '" draggable="true" data-id="' + l.id + '" title="' + esc(l.title) + '"><div class="lb">' + (l.kind === 'doc' ? IC.doc : l.recs.length ? IC.mic : IC.book) + '</div><div class="lt"><div class="ln">' + esc(l.title) + '</div><div class="lm">'
     + new Date(l.created).toLocaleDateString(LOC(), { day:'numeric', month:'short' }) + ' · ' + (l.kind === 'doc' ? (l.marks || []).length + ' işaret' : l.segs.length + ' cümle' + (l.recs.length ? ' · ses' : ''))
     + '</div></div><button class="icon sm del" data-move="' + l.id + '" title="Derse taşı">' + IC.move + '</button><button class="icon sm del" data-del="' + l.id + '" title="' + (l.folder ? 'Sil' : 'Dersi sil') + '">' + IC.trash + '</button></div>';
 }
@@ -11,15 +14,16 @@ function folderHTML(f) {
   const docs = kids.filter(l => l.kind === 'doc').length, recs = kids.length - docs, en = UI === 'en';
   const meta = !kids.length ? (en ? 'empty' : 'boş') : [docs && docs + (en ? ' doc' + (docs > 1 ? 's' : '') : ' belge'), recs && recs + (en ? ' recording' + (recs > 1 ? 's' : '') : ' kayıt')].filter(Boolean).join(' · ');
   return '<div class="folder' + (f.open ? ' open' : '') + '" data-fid="' + f.id + '">'
-    + '<div class="lesson frow' + (kids.some(l => l.id === DB.cur) ? ' has-cur' : '') + '" title="' + esc(f.title) + '"><span class="chev">' + IC.chev + '</span><div class="lb">' + IC.folder + '</div><div class="lt"><div class="ln">' + esc(f.title) + '</div><div class="lm">' + meta + '</div></div>'
+    + '<div class="lesson frow' + (kids.some(l => l.id === DB.cur) ? ' has-cur' : '') + (freshIds.has(f.id) ? ' fresh' : '') + '" title="' + esc(f.title) + '"><span class="chev">' + IC.chev + '</span><div class="lb">' + IC.folder + '</div><div class="lt"><div class="ln">' + esc(f.title) + '</div><div class="lm">' + meta + '</div></div>'
     + '<button class="icon sm fa" data-add="' + f.id + '" title="Bu derse ekle">' + IC.plus + '</button>'
     + '<button class="icon sm del" data-ren="' + f.id + '" title="Adını değiştir">' + IC.pen + '</button>'
     + '<button class="icon sm del" data-fdel="' + f.id + '" title="Dersi sil">' + IC.trash + '</button></div>'
-    + (f.open ? '<div class="kids">' + (kids.length ? kids.map(itemHTML).join('') : '<button class="fempty" data-add="' + f.id + '">+ PDF ya da kayıt ekle</button>') + '</div>' : '') + '</div>';
+    + (f.open ? '<div class="kids' + (justOpened === f.id ? ' opening' : '') + '">' + (kids.length ? kids.map(itemHTML).join('') : '<button class="fempty" data-add="' + f.id + '">+ PDF ya da kayıt ekle</button>') + '</div>' : '') + '</div>';
 }
 function renderLessons() {
   const loose = DB.lessons.filter(l => !folderOf(l.folder));
   $('lessonList').innerHTML = [...DB.folders, ...loose].sort(byNew).map(x => DB.folders.includes(x) ? folderHTML(x) : itemHTML(x)).join('');
+  freshIds.clear(); justOpened = null;
   // başlığın yanında hangi dersin içinde olduğu
   const f = L() && folderOf(L().folder);
   $('crumb').hidden = !f; $('crumb').textContent = f ? f.title : '';
@@ -29,7 +33,9 @@ function switchLesson(id, force) {
   if (!force && R.state !== 'idle') { toast('Önce kaydı bitir, sonra derse geç'); return; }
   saveNow(); DB.cur = id; curRec = null; playingIdx = -1;
   $('pop').hidden = true; filt.q = ''; filt.star = false; $('q').value = ''; $('starFilter').classList.remove('on');
-  renderAll();
+  // Chrome'un sayfa geçişiyle yumuşakça değişir
+  if (document.startViewTransition && !reduceMotion()) document.startViewTransition(renderAll);
+  else renderAll();
   if (translatorKey !== (L().src || 'en') + '>' + L().lang) initTranslator();
 }
 $('lessonList').addEventListener('click', e => {
@@ -45,6 +51,7 @@ $('lessonList').addEventListener('click', e => {
     const f = folderOf(fr.parentElement.dataset.fid);
     // dar panelde alttakiler görünmüyor, paneli açıp dersi aç
     if ($('app').classList.contains('side-closed')) { f.open = true; setSide(true); } else f.open = !f.open;
+    if (f.open) justOpened = f.id;
     save(); renderLessons(); return;
   }
   const it = e.target.closest('.lesson'); if (it && it.dataset.id !== DB.cur) switchLesson(it.dataset.id);
@@ -71,6 +78,7 @@ function freshItem(fid) {
   let l = L();
   if (l.kind === 'doc' || l.segs.length || l.notes || l.recs.length) { l = newLesson(); DB.lessons.push(l); }
   if (fid) { l.folder = fid; folderOf(fid).open = true; } else delete l.folder;
+  freshIds.add(l.id);
   return l;
 }
 function addMenu(btn, fid) {
@@ -88,6 +96,7 @@ function newRecItem(fid) {
   toast(T('Hazır. Kaydı başlat\'a bas'));
 }
 function moveTo(l, fid) {
+  freshIds.add(l.id);
   if (fid) { l.folder = fid; folderOf(fid).open = true; } else delete l.folder;
   save(); renderLessons();
 }
@@ -121,7 +130,7 @@ async function newFolder() {
   const name = await ask(T('Dersin adı:'), { input:'', ok:T('Oluştur') });
   if (name === null) return null;
   const f = { id:'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title:name.trim() || T('Adsız ders'), created:Date.now(), open:true };
-  DB.folders.push(f); saveNow(); renderLessons();
+  DB.folders.push(f); freshIds.add(f.id); saveNow(); renderLessons();
   return f;
 }
 async function renameFolder(fid) {
@@ -189,8 +198,15 @@ function lessonHTML() {
     + (l.segs.length ? '<h2>' + T('Transkript (kalın = önemli)') + '</h2><table>' + rows + '</table>' : '') + '</body></html>';
 }
 const fileName = () => (L().title || 'ders').replace(/[\\/:*?"<>|]+/g, '-').trim();
-$('exportBtn').onclick = () => { $('exportMenu').hidden = !$('exportMenu').hidden; $('setPop').hidden = true; };
-$('langBtn').onclick = () => { $('setPop').hidden = !$('setPop').hidden; $('exportMenu').hidden = true; };
+// üst çubuktaki menüler: biri açılınca öbürleri kapanır
+const MENUS = ['setPop', 'exportMenu', 'addMenu'];
+const closeMenus = () => MENUS.forEach(m => { $(m).hidden = true; });
+function toggleMenu(id) { const was = $(id).hidden; closeMenus(); $(id).hidden = !was; }
+$('exportBtn').onclick = () => toggleMenu('exportMenu');
+$('langBtn').onclick = () => toggleMenu('setPop');
+$('addBtn').onclick = () => toggleMenu('addMenu');
+$('addMenu').addEventListener('click', e => { if (e.target.closest('button')) $('addMenu').hidden = true; });
+$('addRec').onclick = () => newRecItem(L().folder);
 $('exportMenu').addEventListener('click', async e => {
   const b = e.target.closest('[data-exp]'); if (!b) return;
   $('exportMenu').hidden = true;
@@ -234,7 +250,9 @@ async function makeBackup(withAudio) {
     if (blob) out.audio[key] = await blobToDataURL(blob);
   }
   download(new Blob([JSON.stringify(out)], { type:'application/json' }), 'lecmic-yedek-' + new Date().toISOString().slice(0, 10) + (withAudio ? '-sesli' : '') + '.json');
+  lsSet('ders-lastbk', Date.now());
   setStatus(''); toast('Yedek indirildi');
+  if ($('setDlg').open && setSec === 'veri') renderData();
 }
 async function restoreBackup(file) {
   let j; try { j = JSON.parse(await file.text()); } catch { j = null; }
@@ -261,7 +279,6 @@ $('bkFull').onclick = () => { $('exportMenu').hidden = true; makeBackup(true); }
 $('bkRestore').onclick = () => { $('exportMenu').hidden = true; $('bkFile').click(); };
 $('bkFile').onchange = () => { const f = $('bkFile').files[0]; $('bkFile').value = ''; if (f) restoreBackup(f); };
 
-$('help').onclick = () => $('helpDlg').showModal();
 $('ui').value = UI;
 $('ui').onchange = () => {
   UI = $('ui').value; lsSet('ders-ui', UI);

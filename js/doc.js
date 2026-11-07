@@ -181,8 +181,16 @@ $('docPage').onchange = () => {
 };
 
 // kelimenin üstüne gelince anlamı
-let hoverT = null, lastWord = '';
-const hideTip = () => { $('tip').hidden = true; lastWord = ''; };
+let hoverT = null, lastWord = '', tipHideT = null;
+// kapanırken söner
+const hideTip = () => {
+  lastWord = '';
+  const tip = $('tip');
+  clearTimeout(hoverT);
+  if (tip.hidden || tip.classList.contains('out')) return;
+  tip.classList.add('out');
+  tipHideT = setTimeout(() => { tip.hidden = true; tip.classList.remove('out', 'placed'); tip.style.width = tip.style.height = ''; }, 140);
+};
 $('docHover').checked = lsGet('ders-dochover', '0') === '1';
 $('docHover').onchange = () => { lsSet('ders-dochover', $('docHover').checked ? '1' : '0'); hideTip(); };
 function caretAt(x, y) {
@@ -208,22 +216,32 @@ async function hoverWord(x, y) {
   if (!getSelection().isCollapsed) return;
   const hit = wordAt(x, y), tip = $('tip');
   if (!hit || hit.w.length < 2) return hideTip();
+  hit.c = caretAt(x, y);
   if (lastWord === hit.w && !tip.hidden) return;
   lastWord = hit.w;
   const l = L();
+  // kelimenin geçtiği cümle, anlamı ona göre seçilsin
+  let sent = '';
+  try { const parts = hit.c && sentenceParts(hit.c.startContainer, hit.c.startOffset); if (parts) sent = joinParts(parts); } catch {}
+  const get = wordInContext(hit.w, sent, l.lang, l.src || 'en')
+    .then(r => meaningHTML(r, true), () => '<div class="mm">' + esc(T('(çeviri alınamadı)')) + '</div>');
+  // daha önce bakılan kelimede cevap hemen gelir, o zaman parıldayan satır hiç görünmesin
+  let html = await Promise.race([get, new Promise(r => setTimeout(() => r(null), 80))]);
+  if (lastWord !== hit.w) return;
+  clearTimeout(tipHideT); tip.classList.remove('out');
+  const show = h => '<b>' + esc(hit.w) + '</b><div class="tin">' + (h || '<div class="tsk"></div>') + '</div>';
   tip.dir = l.lang === 'ur' ? 'rtl' : 'ltr';
-  tip.innerHTML = '<b>' + esc(hit.w) + '</b><br>...';
+  morph(tip, () => { tip.innerHTML = show(html); });
+  place(tip, Math.max(8, Math.min(innerWidth - 330, hit.rect.left)), hit.rect.bottom + 6);
   tip.hidden = false;
-  tip.style.left = Math.max(8, Math.min(innerWidth - 280, hit.rect.left)) + 'px';
-  tip.style.top = (hit.rect.bottom + 6) + 'px';
-  let m;
-  try { m = await translateWord(hit.w, l.lang); } catch { m = '(çeviri alınamadı)'; }
-  if (lastWord === hit.w) tip.innerHTML = '<b>' + esc(hit.w) + '</b><br>' + esc(m);
+  if (html) return;
+  html = await get;
+  if (lastWord === hit.w && !tip.hidden) morph(tip, () => { tip.innerHTML = show(html); });
 }
 $('docBody').addEventListener('mousemove', e => {
   clearTimeout(hoverT);
   if (!$('docHover').checked || !trOn || e.buttons) return;
-  hoverT = setTimeout(() => hoverWord(e.clientX, e.clientY), 380);
+  hoverT = setTimeout(() => hoverWord(e.clientX, e.clientY), 250);
 });
 $('docBody').addEventListener('mouseleave', () => { clearTimeout(hoverT); hideTip(); });
 $('docBody').addEventListener('mousedown', () => { clearTimeout(hoverT); hideTip(); });
@@ -445,7 +463,7 @@ $('selbar').addEventListener('click', e => {
 // işaretler sekmesi
 function renderMarks() {
   const ms = [...(L().marks || [])].sort((a, b) => a.p - b.p || a.s - b.s);
-  $('mkCount').textContent = ms.length ? '(' + ms.length + ')' : '';
+  $('mkCount').textContent = ms.length || '';
   $('marksList').innerHTML = ms.length ? ms.map(m =>
     '<div class="mk" data-id="' + m.id + '" style="border-left-color:' + MKCOL[m.c] + '"><div class="mkt">' + esc(m.t)
     + (m.tr ? '<span class="st">' + esc(m.tr) + '</span>' : '') + '</div><div class="mkb"><span class="pgn">s. ' + (m.p + 1)

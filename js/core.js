@@ -49,10 +49,48 @@ function ask(msg, { sub = '', input = null, ok = 'Tamam', danger = false, cancel
     if (input === null) $('askOk').focus(); else { inp.focus(); inp.select(); }
   });
 }
-function toast(msg) {
+// act verilirse yanında düğme olur: { label, fn }
+function toast(msg, act) {
   const d = document.createElement('div'); d.textContent = msg;
-  $('toast').appendChild(d); setTimeout(() => d.remove(), 3600);
+  if (act) {
+    const b = document.createElement('button'); b.textContent = act.label;
+    b.onclick = () => { act.fn(); d.remove(); };
+    d.appendChild(b); d.classList.add('act');
+  }
+  $('toast').appendChild(d);
+  setTimeout(() => { d.classList.add('out'); setTimeout(() => d.remove(), 220); }, act ? 9000 : 3400);
 }
+const VERSION = 'Beta 0.9';
+// kısayolların tuşu: Mac'te ⌘, Windows'ta Ctrl (ikisi de çalışır)
+const MOD = IS_MAC ? '⌘' : 'Ctrl';
+if (IS_MAC) {
+  document.querySelectorAll('kbd.mod').forEach(k => { k.textContent = '⌘'; });
+  document.querySelectorAll('[title*="Ctrl+"]').forEach(el => { el.title = el.title.replace('Ctrl+', '⌘'); });
+}
+// ayarlardan ya da cihazdan "hareketi azalt"
+const reduceMotion = () => document.documentElement.dataset.motion === 'reduce' || matchMedia('(prefers-reduced-motion: reduce)').matches;
+// içeriği değişen kutu yeni boyutuna birden zıplamasın, yumuşakça büyüyüp küçülsün
+function morph(el, change) {
+  if (el.hidden || reduceMotion()) { clearTimeout(el._mT); el.style.width = el.style.height = ''; change(); return; }
+  const a = el.getBoundingClientRect();
+  clearTimeout(el._mT); el.style.width = el.style.height = '';
+  change();
+  const b = el.getBoundingClientRect();
+  if (Math.abs(a.width - b.width) < 1 && Math.abs(a.height - b.height) < 1) return;
+  el.style.width = a.width + 'px'; el.style.height = a.height + 'px';
+  void el.offsetWidth;
+  el.style.width = b.width + 'px'; el.style.height = b.height + 'px';
+  el._mT = setTimeout(() => { el.style.width = el.style.height = ''; }, 240);
+}
+// ilk açılışta kutu olduğu yerde belirir, açıkken yeri değişirse kayarak gider
+function place(el, left, top) {
+  const was = !el.hidden && !el.classList.contains('out');
+  if (!was) el.classList.remove('placed');
+  el.style.left = left + 'px'; el.style.top = top + 'px';
+  if (!was) requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('placed')));
+}
+// animasyonu baştan oynatır (aynı öğe yeniden güncellenince)
+function replay(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 function setStatus(t) { $('status').textContent = t || ''; }
 function download(blob, name) {
   const a = document.createElement('a');

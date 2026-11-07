@@ -102,8 +102,10 @@ function sumHead(gr, n) {
   const seg = L().segs[gr.i];
   return T('Bölüm ' + (gr.g + 1)) + (seg && seg.t != null ? ' · ' + fmt(seg.t) : '');
 }
-function renderSummary() {
+// enter: yeni çıkan özetin maddeleri sırayla belirsin. sonraki çizimlerde (çeviri gelince) tekrar oynamasın
+function renderSummary(enter) {
   const sm = L().summary, el = $('sumBody');
+  el.classList.toggle('enter', !!enter);
   $('sumNote').disabled = !sm;
   $('sumEngine').hidden = !sm;
   $('sumDel').hidden = !sm;
@@ -113,11 +115,12 @@ function renderSummary() {
   $('sumEngine').className = 'pill ' + (sm.by === 'chrome' ? 'ok' : 'warn');
   $('sumEngine').title = sm.why || '';
   const dir = L().lang === 'ur' ? 'rtl' : 'ltr', groups = sumGroups(sm.pts);
+  let n = 0;
   el.innerHTML = (sm.why && sm.by !== 'chrome' ? '<div class="sumwhy">' + esc(sm.why) + '</div>' : '') + groups.map(gr => {
     const seg = L().segs[gr.i], head = sumHead(gr, groups.length);
     // bölüm saatine tıklayınca kaydın o yeri çalar
     return (head ? '<div class="sumsec">' + (seg && seg.t != null && seg.rec ? '<button class="sumt" data-i="' + gr.i + '">' + esc(head) + '</button>' : esc(head)) + '</div>' : '')
-      + '<ul>' + gr.pts.map(p => '<li>' + esc(p.s) + (p.t ? '<span class="st" dir="' + dir + '">' + esc(p.t) + '</span>' : '') + '</li>').join('') + '</ul>';
+      + '<ul>' + gr.pts.map(p => '<li style="animation-delay:' + Math.min(600, (n++) * 40) + 'ms">' + esc(p.s) + (p.t ? '<span class="st" dir="' + dir + '">' + esc(p.t) + '</span>' : '') + '</li>').join('') + '</ul>';
   }).join('');
 }
 $('sumBody').addEventListener('click', e => { const b = e.target.closest('.sumt'); if (b && L().segs[+b.dataset.i]) playSeg(L().segs[+b.dataset.i]); });
@@ -127,7 +130,8 @@ $('sumGo').onclick = async () => {
   if (summing) return;
   if (l.segs.length < 3) { toast('Özet için biraz daha transkript lazım'); return; }
   summing = true; $('sumGo').disabled = true;
-  const msg = t => { $('sumBody').innerHTML = '<div class="empty">' + esc(t) + '</div>'; };
+  // hazırlanırken maddelerin yerinde parıldayan iskelet
+  const msg = t => { $('sumBody').innerHTML = '<div class="sk-msg">' + esc(T(t)) + '</div><div class="sk"><i></i><i></i><i></i><i></i><i></i></div>'; };
   msg('Özet hazırlanıyor...');
   const secs = sumSections(l.segs);
   let pts = null, by = 'local', why = '';
@@ -137,7 +141,7 @@ $('sumGo').onclick = async () => {
   } catch (e) { console.warn(e); why = 'Chrome yapay zekâsı hata verdi: ' + (e.message || e.name); }
   if (!pts) pts = extractiveSummary(l.segs, secs);
   l.summary = { pts:pts.map(p => ({ s:p.s, en:p.en, t:null, g:p.g, i:p.i })), by, why, at:Date.now() };
-  save(); renderSummary();
+  save(); renderSummary(true);
   if (trOn) {
     const src = l.src || 'en';
     for (const p of l.summary.pts) {

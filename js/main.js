@@ -4,7 +4,7 @@ addEventListener('keydown', e => {
   const mod = e.ctrlKey || e.metaKey;
   if (mod && e.key === 'Enter') { e.preventDefault(); toggleMain(); return; }
   if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); $('q').focus(); $('q').select(); return; }
-  if (e.key === 'Escape') { hideSelbar(); $('pop').hidden = true; $('exportMenu').hidden = true; $('setPop').hidden = true; if (document.activeElement === $('q')) $('q').blur(); return; }
+  if (e.key === 'Escape') { hideSelbar(); $('pop').hidden = true; closeMenus(); if (document.activeElement === $('q')) $('q').blur(); return; }
   if (typing || mod || e.altKey) return;
   if (e.code === 'Space' && L().kind !== 'doc' && !e.target.closest('button,a,audio,summary')) {
     e.preventDefault();
@@ -27,4 +27,8 @@ initTranslator(L().lang);
 checkRecover();
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
 // açılış ekranını kaldır. çok hızlı açılınca göz kırpmış gibi olmasın diye en az yarım saniye kalır
-setTimeout(() => { $('splash').classList.add('done'); setTimeout(() => $('splash').remove(), 400); }, Math.max(0, 600 - performance.now()));
+// açılış ekranı kalkarken paneller sırayla gelir
+setTimeout(() => {
+  $('splash').classList.add('done'); $('app').classList.add('enter');
+  setTimeout(() => { $('splash').remove(); $('app').classList.remove('enter'); }, 700);
+}, Math.max(0, 600 - performance.now()));

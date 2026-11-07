@@ -73,21 +73,22 @@
           <div class="row"><label><input type="checkbox" id="trToggle"> Çeviri</label>
             <select id="lang" title="Çeviri dili"></select></div>
           <div class="row"><label>Çeviri motoru</label><span class="pill" id="engine">...</span></div>
-          <hr>
-          <div class="row"><label for="ui">Arayüz dili</label>
-            <select id="ui" title="Arayüz dili"><option value="tr">Türkçe</option><option value="en">English</option></select></div>
-          <div class="row"><label>Yazı boyutu</label>
-            <span><button class="btn sm" id="fsMinus" title="Küçült ( - )">A-</button> <button class="btn sm" id="fsPlus" title="Büyüt ( + )">A+</button></span></div>
-          <div class="row"><label>Tema</label><button class="btn sm" id="theme">Açık / koyu</button></div>
+          <button class="set-more" data-open-set="ders">Diğer ayarlar</button>
         </div>
       </div>
 
       <div class="menu">
-        <button class="btn" id="exportBtn">Dosya<span class="caret">&#9662;</span></button>
+        <button class="btn" id="addBtn" title="Derse ekle"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span class="lbl">Ekle</span></button>
+        <div class="pop list ico" id="addMenu" hidden>
+          <button id="docOpen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v4h4"/><path class="ac" d="M8.5 12h7M8.5 15.5h5"/></svg><span><b>PDF ya da Word aç</b><small>Okurken çevir, işaretle, not al</small></span></button>
+          <button id="addRec"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="2.5" width="7" height="12.5" rx="3.5"/><path class="ac" d="M10.9 6.5h2.2M10.9 9h2.2M10.9 11.5h2.2"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5"/></svg><span><b>Yeni canlı kayıt</b><small>Hoca konuştukça yazıya dök</small></span></button>
+          <button id="impBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2"/><path class="ac" d="M21 12h0"/></svg><span><b>Ses dosyasından transkript</b><small>Hazır bir kaydı yazıya dök</small></span></button>
+        </div>
+      </div>
+      <div class="menu">
+        <button class="icon" id="exportBtn" title="Dışa aktar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M5 13v5a2.5 2.5 0 0 0 2.5 2.5h9A2.5 2.5 0 0 0 19 18v-5"/></svg></button>
         <div class="pop list" id="exportMenu" hidden>
-          <button id="docOpen">Belge aç (PDF / Word)...</button>
-          <button id="impBtn">Ses dosyasından transkript çıkar...</button>
-          <hr>
+          <div class="ph">Dışa aktar</div>
           <button data-exp="notesdoc">Sadece notlar (.doc)</button>
           <button data-exp="notestxt">Sadece notlar (.txt)</button>
           <hr>
@@ -95,13 +96,9 @@
           <button data-exp="pdf">Tüm ders: PDF olarak kaydet</button>
           <button data-exp="txt">Tüm ders: düz metin (.txt)</button>
           <button data-exp="mp3">Ses kaydını indir (.mp3)</button>
-          <hr>
-          <button id="bkLite">Yedekle (sadece yazılar)</button>
-          <button id="bkFull">Yedekle (sesle birlikte)</button>
-          <button id="bkRestore">Yedekten geri yükle...</button>
         </div>
       </div>
-      <button class="icon" id="help" title="Klavye kısayolları"><b>?</b></button>
+      <button class="icon" id="setBtn" title="Ayarlar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2" class="ac"/><circle cx="17" cy="17" r="2"/></svg></button>
     </header>
 
     <div id="banner" hidden>
@@ -116,6 +113,8 @@
       <button data-mtab="vocab">Kelimeler</button>
       <button data-mtab="sum">Özet</button>
       <button data-mtab="marks">İşaretler</button>
+      <button data-mtab="tr">Çeviri</button>
+      <span class="ink"></span>
     </nav>
 
     <main id="main">
@@ -133,7 +132,7 @@
             <div class="empty" id="enEmpty"></div>
           </div>
         </div>
-        <div class="split h" id="splitH" title="Sürükle"></div>
+        <div class="split h" id="splitH" title="Sürükle · çift tıkla: sıfırla"></div>
         <div class="panel" id="trPanel">
           <header><span id="trTitle">Türkçe</span></header>
           <div class="body" id="tr">
@@ -157,15 +156,16 @@
         <button class="btn primary sm" id="live" hidden>Canlıya dön &#8595;</button>
       </section>
 
-      <div class="split v" id="splitV" title="Sürükle"></div>
+      <div class="split v" id="splitV" title="Sürükle · çift tıkla: sıfırla"></div>
 
-      <section class="panel" id="right">
+      <section class="panel" id="right" data-tab="notes">
         <div class="tabs">
-          <button class="tab on" data-tab="notes">Notlar</button>
-          <button class="tab" data-tab="vocab">Kelimeler <span id="vCount"></span></button>
-          <button class="tab" data-tab="sum">Özet</button>
-          <button class="tab" data-tab="marks">İşaretler <span id="mkCount"></span></button>
-          <span class="count" id="count"></span>
+          <button class="tab on" data-tab="notes" title="Notlar"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h11A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-13A2.5 2.5 0 0 1 6.5 3z"/><path class="ac" d="M8 8h8M8 12h8M8 16h5"/></svg><span class="tl">Notlar</span></button>
+          <button class="tab" data-tab="vocab" title="Kelimeler"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 8 7l4 11M5.5 14.5h5"/><path class="ac" d="M14.5 9h5.5M14.5 13h5.5M14.5 17h3.5"/></svg><span class="tl">Kelimeler</span><span id="vCount"></span></button>
+          <button class="tab" data-tab="sum" title="Özet"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 10.5h16M4 15h10"/><path class="ac" d="M17 15.5l1.2 2.3 2.3 1.2-2.3 1.2-1.2 2.3-1.2-2.3-2.3-1.2 2.3-1.2z" stroke-width="1.4"/></svg><span class="tl">Özet</span></button>
+          <button class="tab" data-tab="marks" title="İşaretler"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5 19.5 9.5 11 18H6v-5z"/><path class="ac" d="M4 21h16" stroke-width="2.4"/></svg><span class="tl">İşaretler</span><span id="mkCount"></span></button>
+          <button class="tab" data-tab="tr" title="Çeviri"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h9M8 3.5v2M5.5 5.5c.6 3 2.6 5 5.5 6M10.5 5.5c-.6 3.2-3 5.7-6.5 6.7"/><path class="ac" d="M12.5 20.5l3.8-9 3.8 9M13.9 17.3h4.8"/></svg><span class="tl">Çeviri</span></button>
+          <span class="ink"></span>
         </div>
         <div class="pane" id="paneNotes">
           <div class="tools" id="tools">
@@ -174,26 +174,32 @@
               <option value="h2">Başlık 2</option><option value="h3">Başlık 3</option>
             </select>
             <span class="sep"></span>
-            <button data-cmd="bold" title="Kalın (Ctrl+B)"><b>B</b></button>
-            <button data-cmd="italic" title="İtalik (Ctrl+I)"><i>I</i></button>
-            <button data-cmd="underline" title="Altı çizili (Ctrl+U)"><u>U</u></button>
-            <button data-cmd="strikeThrough" title="Üstü çizili"><s>S</s></button>
-            <button data-hl title="Vurgula"><span class="hlA">A</span></button>
+            <button data-cmd="bold" title="Kalın (Ctrl+B)" class="tb"><b>B</b></button>
+            <button data-cmd="italic" title="İtalik (Ctrl+I)" class="tb"><i>I</i></button>
+            <button data-cmd="underline" title="Altı çizili (Ctrl+U)" class="tb"><u>U</u></button>
+            <button data-hl title="Vurgula"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5 19.5 9.5 11 18H6v-5z"/><path class="ac" d="M4 21h16" stroke-width="2.4"/></svg></button>
             <span class="sep"></span>
-            <button data-cmd="insertUnorderedList" title="Madde işaretli liste">Liste</button>
-            <button data-cmd="insertOrderedList" title="Numaralı liste">1. Liste</button>
-            <button data-todo title="İşaretli kutu">Kutu</button>
-            <button data-cmd="outdent" title="Girintiyi azalt">&larr;</button>
-            <button data-cmd="indent" title="Girintiyi artır">&rarr;</button>
-            <span class="sep"></span>
-            <button data-cmd="insertHorizontalRule" title="Ayırıcı çizgi">Çizgi</button>
-            <button data-time title="Saat ekle">Saat</button>
-            <button data-cmd="removeFormat" title="Biçimi temizle">Temizle</button>
-            <span class="sep"></span>
-            <button data-cmd="undo" title="Geri al">Geri</button>
-            <button data-cmd="redo" title="Yinele">İleri</button>
+            <button data-cmd="insertUnorderedList" title="Madde işaretli liste"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6.5h11M9.5 12h11M9.5 17.5h11"/><circle class="acf" cx="4.5" cy="6.5" r="1.3"/><circle class="acf" cx="4.5" cy="12" r="1.3"/><circle class="acf" cx="4.5" cy="17.5" r="1.3"/></svg></button>
+            <button data-cmd="insertOrderedList" title="Numaralı liste"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6.5h10.5M10 12h10.5M10 17.5h10.5"/><path class="ac" d="M4 5l1.5-1v5M3.8 14.5c.3-.9 2.4-1 2.4.3 0 1-2.4 1.6-2.4 3h2.6" stroke-width="1.5"/></svg></button>
+            <span class="tgrow"></span>
+            <div class="tmore-w">
+              <button data-more title="Diğer araçlar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button>
+              <div class="tmore" id="toolsMore" hidden>
+                <button data-todo><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path class="ac" d="M8 12.3l2.7 2.7L16 9.5" stroke-width="2"/></svg>İşaretli kutu</button>
+                <button data-cmd="strikeThrough"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M16 7.5c-.6-1.6-2.2-2.5-4.2-2.5-2.5 0-4.1 1.3-4.1 3.1 0 1.2.7 2.1 2.2 2.7M8 16c.5 1.8 2.2 3 4.3 3 2.6 0 4.2-1.3 4.2-3.2 0-.7-.2-1.3-.6-1.8"/></svg>Üstü çizili</button>
+                <button data-cmd="outdent"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6.5h9M11 12h9M11 17.5h9M3.5 6.5h3"/><path class="ac" d="M7 9.5 4 12l3 2.5"/></svg>Girintiyi azalt</button>
+                <button data-cmd="indent"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6.5h9M11 12h9M11 17.5h9M3.5 6.5h3"/><path class="ac" d="M4 9.5 7 12l-3 2.5"/></svg>Girintiyi artır</button>
+                <button data-cmd="insertHorizontalRule"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12h17"/><path class="ac" d="M7 6.5h10M7 17.5h7"/></svg>Ayırıcı çizgi</button>
+                <button data-time><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path class="ac" d="M12 7.5V12l3 2"/></svg>Saat ekle</button>
+                <button data-cmd="removeFormat"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5h12M12 5l-3 14M8.5 19h5"/><path class="ac" d="M15.5 14.5l5 5M20.5 14.5l-5 5"/></svg>Biçimi temizle</button>
+                <hr>
+                <button data-cmd="undo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 5 4 9.5 8.5 14"/><path d="M4.5 9.5H14a6 6 0 0 1 0 12h-3"/></svg>Geri al</button>
+                <button data-cmd="redo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 5 20 9.5 15.5 14"/><path d="M19.5 9.5H10a6 6 0 0 0 0 12h3"/></svg>Yinele</button>
+              </div>
+            </div>
           </div>
           <div id="notes" contenteditable="true" spellcheck="true" data-placeholder="Notlarını buraya yaz. Soldaki bir cümlenin yanındaki not düğmesine basarsan cümle buraya alıntı olarak eklenir."></div>
+          <div class="nfoot"><span id="count"></span></div>
         </div>
         <div class="pane" id="paneVocab" hidden>
           <form class="vadd" id="vForm">
@@ -213,6 +219,39 @@
         </div>
         <div class="pane" id="paneMarks" hidden>
           <div id="marksList"></div>
+        </div>
+        <div class="pane" id="paneTr" hidden>
+          <div class="gt">
+            <div class="gtl">
+              <select id="gtFrom" title="Kaynak dil"></select>
+              <button class="icon" id="gtSwap" title="Dilleri değiştir"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></button>
+              <select id="gtTo" title="Hedef dil"></select>
+            </div>
+            <div class="gtbox">
+              <textarea id="gtIn" maxlength="5000" placeholder="Çevirmek istediğin metni yaz ya da yapıştır"></textarea>
+              <div class="gtbar">
+                <button class="icon sm" id="gtSayIn" title="Dinle"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+                <span id="gtDet"></span><span class="grow"></span>
+                <span id="gtCount">0 / 5000</span>
+                <button class="icon sm" id="gtClear" title="Temizle" hidden><svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+              </div>
+            </div>
+            <div class="gtbox out">
+              <div id="gtOut" data-placeholder="Çeviri"></div>
+              <div class="gtbar">
+                <button class="icon sm" id="gtSayOut" title="Dinle"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+                <span class="grow"></span>
+                <button class="btn sm" id="gtCopy">Kopyala</button>
+                <button class="btn sm" id="gtNote">Nota ekle</button>
+                <button class="btn sm" id="gtWord" hidden>Deftere ekle</button>
+              </div>
+            </div>
+            <div id="gtDict"></div>
+            <div id="gtHistBox" hidden>
+              <div class="gthh"><span>Son çeviriler</span><button class="btn sm" id="gtHistClear">Temizle</button></div>
+              <div id="gtHist"></div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -286,25 +325,233 @@
   </div>
 </dialog>
 
-<dialog id="helpDlg">
-  <h3>Klavye kısayolları</h3>
-  <table>
+<dialog id="setDlg" class="sheet" aria-labelledby="setTitle" tabindex="-1">
+  <div class="sh">
+    <nav class="sh-nav">
+      <div class="sh-brand"><img src="icons/icon.svg" alt="" width="34" height="34"><div><b id="setTitle">Ayarlar</b></div>
+        <button class="icon sh-x" id="setClose2" title="Kapat"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <button data-sec="genel"><span class="sni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="5.5"/><circle cx="12" cy="12" r="4.3"/><path class="acf" d="M12 7.7a4.3 4.3 0 0 1 0 8.6z"/></svg></span><span class="snt"><b>Genel</b><small>Dil, tema, yazı</small></span></button>
+      <button data-sec="ders"><span class="sni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h7a2.5 2.5 0 0 1 2.5 2.5v3A2.5 2.5 0 0 1 12 11H7.5L4.5 13v-2.2A2.5 2.5 0 0 1 2.5 8.5v-3A2.5 2.5 0 0 1 5 3z"/><path d="M5.8 6.2h5M5.8 8.3h3"/><path class="acs" d="M12 13h7a2.5 2.5 0 0 1 2.5 2.5v3A2.5 2.5 0 0 1 19.5 21v2.2L16.5 21H12a2.5 2.5 0 0 1-2.5-2.5v-3A2.5 2.5 0 0 1 12 13z"/><path class="ac" d="M12.8 16.2h5.5M12.8 18.3h3.5"/></svg></span><span class="snt"><b>Ders ve çeviri</b><small>Diller, çeviri motoru</small></span></button>
+      <button data-sec="mikrofon"><span class="sni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="2.5" width="7" height="12.5" rx="3.5"/><path class="ac" d="M10.9 6.5h2.2M10.9 9h2.2M10.9 11.5h2.2"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5M9 21.5h6"/></svg></span><span class="snt"><b>Mikrofon</b><small>Test, ses ayarı</small></span></button>
+      <button data-sec="veri"><span class="sni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="6" rx="2.5"/><path d="M5.5 9.5v8A2.5 2.5 0 0 0 8 20h8a2.5 2.5 0 0 0 2.5-2.5v-8"/><path class="ac" d="M10 13.5h4"/></svg></span><span class="snt"><b>Veri</b><small>Yedek, alan, silme</small></span></button>
+      <button data-sec="destek"><span class="sni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4h13A2.5 2.5 0 0 1 21 6.5v8.5a2.5 2.5 0 0 1-2.5 2.5H12l-4.5 3.5v-3.5h-2A2.5 2.5 0 0 1 3 15V6.5A2.5 2.5 0 0 1 5.5 4z"/><path class="ac" d="M9.8 9.3a2.3 2.3 0 1 1 3.2 2.1c-.6.3-1 .8-1 1.5"/><circle class="acf" cx="12" cy="15" r=".6"/></svg></span><span class="snt"><b>Destek</b><small>Sorun bildir, SSS</small></span></button>
+      <div class="sh-foot">Lecmic · © whyasaf</div>
+    </nav>
+    <div class="sh-main">
+      <header class="sh-head">
+        <button class="icon sh-back" id="setBack" title="Geri dön"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <h2 id="secTitle">Genel</h2>
+        <button class="icon" id="setClose" title="Kapat"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </header>
+      <div class="sh-body" id="setBody">
+
+        <section data-sec="genel">
+          <div class="srow"><div class="sl"><b>Arayüz dili</b><small>Menüler ve düğmeler</small></div><div class="sc"><select id="ui"><option value="tr">Türkçe</option><option value="en">English</option></select></div></div>
+          <div class="srow col"><div class="sl"><b>Tema</b></div>
+            <div class="themes" id="themePick">
+              <button data-v="light"><span class="tpv tl"><i></i><i></i><i></i></span>Açık</button>
+              <button data-v="dark"><span class="tpv td"><i></i><i></i><i></i></span>Koyu</button>
+              <button data-v=""><span class="tpv ts"><i></i><i></i><i></i></span>Cihaza göre</button>
+            </div>
+          </div>
+          <div class="srow col"><div class="sl"><b>Yazı boyutu</b><small>Transkript ve çeviri yazısı</small></div>
+            <div class="fsr"><span class="fsa">A</span><input type="range" id="fsRange" min="13" max="36" step="1"><span class="fsa big">A</span><output id="fsVal"></output></div>
+            <div class="fsp" id="fsPrev"><span class="ts">00:42</span><p>The lecture starts with a short review.</p><p class="fpt">Ders kısa bir tekrarla başlıyor.</p></div>
+          </div>
+          <div class="srow"><div class="sl"><b>Animasyonlar</b><small>Cihazında "hareketi azalt" açıksa zaten kapalıdır</small></div><div class="sc"><div class="segc" id="motionPick"><button data-v="full">Tam</button><button data-v="reduce">Azaltılmış</button><i class="segi"></i></div></div></div>
+        </section>
+
+        <section data-sec="ders">
+          <p class="snote">Açık dersin dillerini üstteki dil menüsünden değiştirirsin. Buradakiler yeni açılan derslerde kullanılır.</p>
+          <div class="srow"><div class="sl"><b>Konuşma dili</b><small>Yeni derslerde</small></div><div class="sc"><select id="defSrc"></select></div></div>
+          <div class="srow"><div class="sl"><b>Çeviri dili</b><small>Yeni derslerde</small></div><div class="sc"><select id="defLang"></select></div></div>
+          <div class="card eng" id="engCard"><span class="dot"></span><div><b id="engTitle"></b><small id="engSub"></small></div></div>
+          <div class="srow"><div class="sl"><b>PDF'te kelime anlamı</b><small>Fareyle kelimenin üstüne gelince anlamı çıkar</small></div><div class="sc"><label class="tgl"><input type="checkbox" id="setHover"><span></span></label></div></div>
+        </section>
+
+        <section data-sec="mikrofon">
+          <div class="card mt" id="mtCard">
+            <div class="mth"><div><b>Mikrofon testi</b><small id="mtName">Kayda başlamadan sesin gelip gelmediğine bak.</small></div><button class="btn primary sm" id="mtGo">Testi başlat</button></div>
+            <div class="mtb" id="mtBars"></div>
+            <div class="mts" id="mtState"></div>
+          </div>
+          <div class="srow"><div class="sl"><b>Gürültü bastırma</b><small>Kapalıyken uzaktaki hocanın sesi daha net çıkar. Gürültülü sınıfta aç.</small></div><div class="sc"><label class="tgl"><input type="checkbox" id="setNs"><span></span></label></div></div>
+          <div class="srow"><div class="sl"><b>Dinleme hızı</b><small>Kayıtları dinlerken</small></div><div class="sc"><div class="segc" id="ratePick"><button data-v="1">1×</button><button data-v="1.25">1.25×</button><button data-v="1.5">1.5×</button><button data-v="2">2×</button><i class="segi"></i></div></div></div>
+          <p class="snote">Canlı transkript her zaman bilgisayarın varsayılan mikrofonunu kullanır. Yanlış mikrofon seçiliyse değiştir: Windows'ta Ayarlar → Sistem → Ses → Giriş, Mac'te Sistem Ayarları → Ses → Giriş.</p>
+        </section>
+
+        <section data-sec="veri">
+          <div class="card store">
+            <div class="sth"><b id="stTotal">...</b><small>bu cihazda kullanılıyor</small></div>
+            <div class="stbar" id="stBar"></div>
+            <div class="stleg" id="stLeg"></div>
+          </div>
+          <div class="srow"><div class="sl"><b>Kalıcı depolama</b><small><span id="persistTxt">...</span></small></div><div class="sc"><button class="btn sm" id="persistBtn">İzin ver</button></div></div>
+          <div class="srow col"><div class="sl"><b>Yedek</b><small id="bkLast">...</small></div>
+            <div class="bkb">
+              <button class="btn" id="bkLite">Yedekle (sadece yazılar)</button>
+              <button class="btn" id="bkFull">Yedekle (sesle birlikte)</button>
+              <button class="btn" id="bkRestore">Yedekten geri yükle...</button>
+            </div>
+          </div>
+          <div class="srow"><div class="sl"><b>Haftalık yedek hatırlatması</b><small>Bir haftadır yedek almadıysan küçük bir hatırlatma çıkar</small></div><div class="sc"><label class="tgl"><input type="checkbox" id="setBkRemind"><span></span></label></div></div>
+          <div class="danger-z">
+            <div class="sl"><b>Tüm verileri sil</b><small>Bütün dersler, notlar, kayıtlar ve belgeler bu cihazdan silinir. Geri alınamaz.</small></div>
+            <button class="btn danger-o" id="wipeBtn">Hepsini sil</button>
+          </div>
+        </section>
+
+        <section data-sec="destek">
+          <div class="about">
+            <img src="icons/icon.svg" alt="" width="52" height="52">
+            <div><b>Lecmic</b><span class="ver">Sürüm Beta 0.9</span><small>Gelişmekte olan bir beta. Bir şey ters giderse yaz, düzeltelim.</small></div>
+            <button class="btn sm" id="tourAgain">Kısa rehber</button>
+          </div>
+          <h3 class="sh3">Sorun bildir</h3>
+          <div class="card rep">
+            <div class="segc" id="repType"><button data-v="hata">Hata</button><button data-v="oneri">Öneri</button><button data-v="soru">Soru</button><i class="segi"></i></div>
+            <input type="text" id="repTitle" maxlength="90" placeholder="Başlık: kısaca ne oldu?" autocomplete="off">
+            <textarea id="repMsg" maxlength="1500" placeholder="Ayrıntı: neye basınca, ne bekliyordun, ne çıktı? (isteğe bağlı)"></textarea>
+            <label class="repinfo"><input type="checkbox" id="repDev" checked> <span>Cihaz bilgisini ekle: <em id="repDevTxt"></em></span></label>
+            <div class="repb">
+              <button class="btn primary" id="repSend"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3.5 7.5 12 13l8.5-5.5"/></svg>E-postayla gönder</button>
+              <button class="btn" id="repCopy"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="3"/><path d="M15.5 8.5V6a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5"/></svg>Kopyala</button>
+            </div>
+            <small class="rephint">Gönder'e basınca kendi e-posta uygulaman açılır. Açılmazsa mesajı kopyalayıp <b>whyasaf.wa@gmail.com</b> adresine gönder.</small>
+          </div>
+          <h3 class="sh3">Sık sorulanlar</h3>
+          <div class="faq"><details><summary>Mikrofon ses almıyor, ne yapayım?</summary><p>Önce Mikrofon bölümündeki testi çalıştır. Çubuklar kıpırdamıyorsa sorun bilgisayarın ses ayarındadır. Windows'ta Ayarlar → Sistem → Ses → Giriş, Mac'te Sistem Ayarları → Ses → Giriş'ten doğru mikrofonu seç. Ses hiç gelmiyorsa Windows'ta Ayarlar → Gizlilik ve güvenlik → Mikrofon'dan, Mac'te Sistem Ayarları → Gizlilik ve Güvenlik → Mikrofon'dan tarayıcına izin ver. Canlı transkript her zaman sistemin varsayılan mikrofonunu kullanır.</p></details><details><summary>Neden Chrome kullanmam gerekiyor?</summary><p>Canlı transkript ve cihazda çalışan çeviri Chrome ve Edge'in özellikleri. Safari ve Firefox'ta canlı transkript çalışmaz, ama belge okuma ve notlar çalışır.</p></details><details><summary>Derslerim nerede duruyor?</summary><p>Sadece bu cihazda, bu tarayıcıda. Lecmic'in sunucusu da hesap sistemi de yok. Başka bir cihaza geçmek için Veri bölümünden yedek al, öbür cihazda geri yükle.</p></details><details><summary>Hocamı kaydetmem sorun olur mu?</summary><p>Kaydetmeden önce hocandan izin al. Kayıtlar yalnızca senin cihazında durur, kimseyle paylaşılmaz.</p></details><details><summary>Çeviri bazen çalışmıyor, neden?</summary><p>Önce internetini kontrol et. Aynı ağda çok kişi kullanıyorsa Google kısa süreliğine engelleyebilir, birkaç dakika sonra düzelir. Chrome'un kendi çevirmeni olan dillerde internet gerekmez.</p></details><details><summary>Uygulama olarak nasıl kurarım?</summary><p>Windows'ta ve Mac'te Chrome ya da Edge'in adres çubuğunun sağındaki yükle simgesine bas. Uygulama Başlat menüsüne (Mac'te Uygulamalar'a) eklenir. iPhone'da Safari → Paylaş → Ana Ekrana Ekle. Android'de Chrome menüsü → Uygulamayı yükle.</p></details></div>
+          <h3 class="sh3">Klavye kısayolları<span class="segc" id="keyOs"><button data-v="win">Windows</button><button data-v="mac">Mac</button><i class="segi"></i></span></h3>
+          <div class="keys"><table class="ktab">
     <tr><td><kbd>Boşluk</kbd></td><td>Kaydı başlat / duraklat / devam</td></tr>
-    <tr><td><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td><td>Kaydı başlat / bitir</td></tr>
-    <tr><td><kbd>/</kbd> ya da <kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Transkriptte ara</td></tr>
+    <tr><td><kbd class="mod">Ctrl</kbd>+<kbd>Enter</kbd></td><td>Kaydı başlat / bitir</td></tr>
+    <tr><td><kbd>/</kbd> ya da <kbd class="mod">Ctrl</kbd>+<kbd>K</kbd></td><td>Transkriptte ara</td></tr>
     <tr><td><kbd>[</kbd></td><td>Dersler panelini aç/kapat</td></tr>
     <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td>Yazıyı büyüt / küçült</td></tr>
     <tr><td><kbd>Esc</kbd></td><td>Açık pencereyi kapat</td></tr>
   </table>
-  <p style="color:var(--muted);font-size:13px;margin:0 0 14px">Tek tuşlu kısayollar not yazarken ya da kutulara yazarken çalışmaz.
-  Bir İngilizce kelimeye tıklarsan anlamı çıkar. Cümlenin üzerine gelince oynat, önemli ve not düğmeleri görünür.</p>
-  <h3>Verilerin</h3>
-  <ul style="color:var(--muted);font-size:13px;margin:0 0 14px;padding-left:18px">
-    <li>Derslerin, notların ve ses kayıtların sadece bu tarayıcıda saklanır, kimseye gönderilmez.</li>
-    <li>Canlı transkript için ses Google'a, çeviri için metin Google ya da MyMemory'ye gider.</li>
-    <li>Tarayıcı verilerini silersen dersler de silinir. Dosya menüsünden yedek almayı unutma.</li>
-  </ul>
-  <form method="dialog"><button class="btn primary">Tamam</button></form>
+            <small>Tek tuşlu kısayollar not yazarken ya da kutulara yazarken çalışmaz.</small>
+          </div>
+          <h3 class="sh3">Gizlilik özeti</h3>
+          <div class="card priv">
+            <div><span class="pd ok"></span><p><b>Cihazında kalır:</b> dersler, notlar, kelimeler, ses kayıtları ve belgeler.</p></div>
+            <div><span class="pd gg"></span><p><b>Google'a gider:</b> canlı transkript için ses, çeviri için metin.</p></div>
+            <div><span class="pd mm"></span><p><b>MyMemory'ye gider:</b> Google cevap vermezse çevrilecek metin.</p></div>
+            <div><span class="pd lm"></span><p><b>Lecmic'e gelen:</b> hiçbir şey. Sunucumuz da hesap sistemimiz de yok.</p></div>
+          </div>
+          <div class="legal">
+            <button data-legal="kvkk">KVKK aydınlatma metni</button><button data-legal="gizlilik">Gizlilik politikası</button><button data-legal="kosullar">Kullanım koşulları</button>
+          </div>
+          <h3 class="sh3">Bu sürümde</h3>
+          <ul class="notes09">
+            <li>Derslerin altında birden çok PDF ve kayıt</li>
+            <li>Google Çeviri gibi çeviri sekmesi</li>
+            <li>Kelimenin cümledeki anlamı</li>
+            <li>Yeni oynatıcı, dinleme hızı</li>
+            <li>Mikrofon iyileştirmeleri ve test</li>
+            <li>Animasyonlar</li>
+          </ul>
+          <a class="gh" href="https://github.com/whyasaf/lecmic" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 7 3.5 12l5 5M15.5 7l5 5-5 5M13.5 4.5l-3 15"/></svg><span>Kaynak kodu GitHub'da</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 16 16 8M9.5 8H16v6.5"/></svg></a>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="legalDlg" class="reader" aria-labelledby="legalTitle" tabindex="-1">
+  <header class="rd-head">
+    <div class="rd-top">
+      <button class="icon" id="legalClose" title="Kapat"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <b id="legalTitle">Gizlilik ve koşullar</b>
+    </div>
+    <div class="segc" id="legalTabs"><button data-v="kvkk">KVKK</button><button data-v="gizlilik">Gizlilik</button><button data-v="kosullar">Koşullar</button><i class="segi"></i></div>
+  </header>
+  <div class="rd-body" id="legalBody">
+    <article data-doc="kvkk" lang="tr"><h1>KVKK Aydınlatma Metni</h1><p class="upd">Son güncelleme: 7 Kasım 2026</p><p class="lead">Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu'nun (KVKK) 10. maddesi gereği seni bilgilendirmek için hazırlandı. Kısaca: Lecmic senin ders verilerini toplamaz. Bize ulaşan tek kişisel veri, kendi isteğinle gönderdiğin destek e-postalarıdır.</p>
+<h2>1. Veri sorumlusu</h2><p>Lecmic, whyasaf tarafından geliştirilen ücretsiz bir uygulamadır. Veri sorumlusu whyasaf'tır. İletişim: <a href="mailto:whyasaf.wa@gmail.com">whyasaf.wa@gmail.com</a></p>
+<h2>2. Hangi verileri işliyoruz?</h2><p>Lecmic'in sunucusu ve hesap sistemi yoktur. Derslerin, notların, kelimelerin, ses kayıtların ve belgelerin yalnızca senin cihazında, tarayıcının deposunda saklanır ve bize ulaşmaz.</p><p>Bize ulaşan veriler yalnızca Destek bölümünden ya da doğrudan bize e-posta gönderdiğinde oluşur:</p><ul><li>E-posta adresin ve e-posta hesabında görünen adın</li><li>Yazdığın başlık ve mesaj</li><li>İsteğe bağlı olarak eklediğin cihaz bilgisi: Lecmic sürümü, tarayıcı, işletim sistemi, ekran boyutu ve çeviri motoru</li></ul>
+<h2>3. Hangi amaçla?</h2><p>Sorununu ya da önerini anlamak, sana cevap vermek ve uygulamadaki hataları düzeltmek için. Bu veriler reklam, pazarlama ya da profil çıkarma için kullanılmaz, satılmaz.</p>
+<h2>4. Hukuki sebep ve toplama yöntemi</h2><p>Veriler, bize kendi isteğinle gönderdiğin e-posta yoluyla toplanır. Talebine cevap verebilmek için işlenmeleri gerekir (KVKK madde 5/2-c ve 5/2-f).</p>
+<h2>5. Kimlere aktarılır?</h2><p>E-postalar Google'ın e-posta hizmeti (Gmail) üzerinde saklanır. Google'ın sunucuları yurt dışında olabileceği için bu durum yurt dışına aktarım sayılabilir. Bu veriler başka hiç kimseyle paylaşılmaz.</p>
+<h2>6. Ne kadar saklanır?</h2><p>Sorunun çözüldükten sonra en fazla bir yıl saklanır, sonra silinir. İstersen hemen silinir.</p>
+<h2>7. Hakların</h2><p>KVKK'nın 11. maddesi gereği şunları isteyebilirsin:</p><ul><li>Kişisel verinin işlenip işlenmediğini öğrenmek ve işlendiyse bilgi istemek</li><li>İşlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenmek</li><li>Aktarıldığı üçüncü kişileri bilmek</li><li>Eksik ya da yanlışsa düzeltilmesini, gerekiyorsa silinmesini istemek</li><li>Otomatik sistemlerle analiz edilmesi sonucu aleyhine bir sonuç çıkmasına itiraz etmek</li><li>Kanuna aykırı işlenmesi nedeniyle zarara uğrarsan zararın giderilmesini istemek</li></ul><p>Başvurunu <a href="mailto:whyasaf.wa@gmail.com">whyasaf.wa@gmail.com</a> adresine yazabilirsin. En geç 30 gün içinde cevap verilir.</p>
+<h2>8. Üçüncü taraf hizmetler</h2><p>Bazı özellikler senin tarayıcından doğrudan Google gibi hizmetlere bağlanır. Bu veriler bize gelmez. Ayrıntılar Gizlilik Politikası'nda.</p></article><article data-doc="kvkk" lang="en"><h1>KVKK Privacy Notice</h1><p class="upd">Last updated: 7 November 2026</p><p class="lead">This notice is provided under Article 10 of the Turkish Personal Data Protection Law No. 6698 (KVKK). In short: Lecmic does not collect your lesson data. The only personal data that reaches us is the support email you choose to send.</p>
+<h2>1. Data controller</h2><p>Lecmic is a free app developed by whyasaf. The data controller is whyasaf. Contact: <a href="mailto:whyasaf.wa@gmail.com">whyasaf.wa@gmail.com</a></p>
+<h2>2. What data do we process?</h2><p>Lecmic has no server and no accounts. Your lessons, notes, words, recordings and documents are stored only on your device, in your browser's storage, and never reach us.</p><p>Data reaches us only when you email us, from the Support section or directly:</p><ul><li>Your email address and the name shown on your email account</li><li>The title and message you write</li><li>Device info, if you choose to include it: Lecmic version, browser, operating system, screen size and translation engine</li></ul>
+<h2>3. Why?</h2><p>To understand your problem or idea, to reply to you and to fix bugs in the app. This data is never used for advertising, marketing or profiling, and is never sold.</p>
+<h2>4. Legal basis and how it is collected</h2><p>The data is collected through the email you choose to send us. Processing it is needed to answer your request (KVKK Article 5/2-c and 5/2-f).</p>
+<h2>5. Who receives it?</h2><p>Emails are stored on Google's email service (Gmail). Google's servers may be outside Turkey, so this may count as a transfer abroad. The data is not shared with anyone else.</p>
+<h2>6. How long is it kept?</h2><p>At most one year after your issue is resolved, then it is deleted. On request it is deleted right away.</p>
+<h2>7. Your rights</h2><p>Under Article 11 of the KVKK you can ask:</p><ul><li>Whether your personal data is processed, and for information if it is</li><li>Why it is processed and whether it is used for that purpose</li><li>Which third parties it was transferred to</li><li>For it to be corrected if it is incomplete or wrong, and deleted where needed</li><li>To object to a result against you that comes from automated analysis</li><li>For compensation if you are harmed by unlawful processing</li></ul><p>Write your request to <a href="mailto:whyasaf.wa@gmail.com">whyasaf.wa@gmail.com</a>. You will get an answer within 30 days.</p>
+<h2>8. Third-party services</h2><p>Some features connect directly from your browser to services such as Google. That data does not come to us. See the Privacy Policy for details.</p></article>
+    <article data-doc="gizlilik" lang="tr"><h1>Gizlilik Politikası</h1><p class="upd">Son güncelleme: 7 Kasım 2026</p><p class="lead">Lecmic'te hesap, reklam ve takip yok. Kullanım istatistiği tutmuyoruz, çerez kullanmıyoruz.</p>
+<h2>Cihazında kalanlar</h2><p>Dersler, notlar, kelime defteri, özetler, işaretler, ses kayıtları, açtığın PDF ve Word belgeleri, ayarların ve son çevirilerin yalnızca bu cihazda, tarayıcının deposunda durur. Ses dosyasından transkript ve Chrome'un yapay zekâsıyla özet de cihazında çalışır, ses ve metin hiçbir yere gönderilmez.</p>
+<h2>Üçüncü taraflara gidenler</h2><p>Aşağıdaki özellikler kullanıldığında senin tarayıcın doğrudan bu hizmetlere bağlanır. Bu veriler bize gelmez. Her hizmet kendi gizlilik politikasına tabidir.</p><ul>
+<li><b>Google (konuşma tanıma):</b> Canlı transkript açıkken mikrofon sesi, Chrome'un konuşma tanıma hizmetine gider.</li>
+<li><b>Google Çeviri:</b> Çevrilecek metin ve kelimeler. Chrome'un kendi çevirmeninin desteklediği dillerde çeviri cihazda yapılır, metin bir yere gitmez.</li>
+<li><b>MyMemory:</b> Google cevap vermezse çevrilecek metin.</li>
+<li><b>Hugging Face:</b> Ses dosyasından transkript için yapay zekâ modeli ilk kullanımda buradan indirilir. Sesin gönderilmez.</li>
+<li><b>Vercel, cdnjs, jsDelivr:</b> Uygulamanın kendisi ve kullandığı kütüphaneler buralardan yüklenir. Bu hizmetler, her web sitesinde olduğu gibi IP adresini ve tarayıcı bilgisini görür.</li></ul>
+<h2>Sana ait olanlar</h2><p>Aldığın yedek dosyaları senin bilgisayarına iner. Onları nerede sakladığın ve kimle paylaştığın senin kontrolündedir. Yedeklerin ders içeriklerini içerdiğini unutma.</p>
+<h2>Verilerini silmek</h2><p>Ayarlar → Veri → Tüm verileri sil ile her şeyi bu cihazdan silebilirsin. Tarayıcının site verilerini silmek de aynı sonucu verir.</p>
+<h2>Bize yazdığında</h2><p>Destek için gönderdiğin e-postalar KVKK Aydınlatma Metni'nde anlatıldığı gibi işlenir.</p>
+<h2>Değişiklikler</h2><p>Bu politika değişirse yeni hali bu sayfada yayımlanır ve güncelleme tarihi değişir.</p>
+<h2>İletişim</h2><p><a href="mailto:whyasaf.wa@gmail.com">whyasaf.wa@gmail.com</a></p></article><article data-doc="gizlilik" lang="en"><h1>Privacy Policy</h1><p class="upd">Last updated: 7 November 2026</p><p class="lead">Lecmic has no accounts, no ads and no tracking. We keep no usage statistics and use no cookies.</p>
+<h2>What stays on your device</h2><p>Lessons, notes, the vocabulary notebook, summaries, highlights, recordings, the PDF and Word documents you open, your settings and recent translations stay only on this device, in your browser's storage. Transcribing audio files and summaries with Chrome's built-in AI also run on your device; the audio and text are not sent anywhere.</p>
+<h2>What goes to third parties</h2><p>When you use the features below, your browser connects directly to these services. That data does not come to us. Each service has its own privacy policy.</p><ul>
+<li><b>Google (speech recognition):</b> While the live transcript is on, microphone audio goes to Chrome's speech recognition service.</li>
+<li><b>Google Translate:</b> Text and words to translate. For languages that Chrome's own translator supports, translation happens on your device and the text goes nowhere.</li>
+<li><b>MyMemory:</b> Text to translate, if Google does not answer.</li>
+<li><b>Hugging Face:</b> The AI model for transcribing audio files is downloaded from here on first use. Your audio is not sent.</li>
+<li><b>Vercel, cdnjs, jsDelivr:</b> The app itself and the libraries it uses load from here. As on any website, these services see your IP address and browser info.</li></ul>
+<h2>What belongs to you</h2><p>Backup files download to your computer. Where you keep them and who you share them with is up to you. Remember that backups contain your lesson content.</p>
+<h2>Deleting your data</h2><p>Settings → Data → Delete all data removes everything from this device. Clearing the site data in your browser does the same.</p>
+<h2>When you write to us</h2><p>Support emails are handled as described in the KVKK notice.</p>
+<h2>Changes</h2><p>If this policy changes, the new version is published on this page and the date above changes.</p>
+<h2>Contact</h2><p><a href="mailto:whyasaf.wa@gmail.com">whyasaf.wa@gmail.com</a></p></article>
+    <article data-doc="kosullar" lang="tr"><h1>Kullanım Koşulları</h1><p class="upd">Son güncelleme: 7 Kasım 2026</p><p class="lead">Lecmic'i kullanarak bu koşulları kabul etmiş olursun. Kısa tuttuk, okuması iki dakika.</p>
+<h2>1. Beta sürüm</h2><p>Lecmic ücretsizdir ve beta sürümündedir. Olduğu gibi sunulur. Hatasız ya da kesintisiz çalışacağına dair bir garanti verilmez. Özellikler önceden haber verilmeden değişebilir.</p>
+<h2>2. Otomatik metinler</h2><p>Transkript, çeviri, kelime anlamları ve özetler otomatik üretilir ve hatalı olabilir. Sınav ya da ödev için önemli bir bilgiyi kaynağından kontrol et.</p>
+<h2>3. Kayıt ve izin</h2><p>Bir dersi ya da konuşmayı kaydetmeden önce konuşan kişiden, gerekiyorsa okulundan izin almak senin sorumluluğundadır. Kayıtları ve transkriptleri başkalarının haklarını çiğneyecek şekilde paylaşma.</p>
+<h2>4. Verilerin ve yedek</h2><p>Verilerin yalnızca cihazında durur. Tarayıcı verilerini silmek, tarayıcıyı ya da cihazı değiştirmek verilerini kaybettirebilir. Düzenli yedek al. Veri kaybından whyasaf sorumlu tutulamaz.</p>
+<h2>5. Üçüncü taraf hizmetler</h2><p>Canlı transkript ve çeviri Google gibi üçüncü taraf hizmetlerle çalışır. Bu hizmetler kendi koşullarına tabidir ve zaman zaman erişilemez olabilir.</p>
+<h2>6. Kaynak kodu ve marka</h2><p>Lecmic'in kaynak kodu MIT lisansıyla açıktır ve GitHub'dan incelenebilir. "Lecmic" adı ve logosu whyasaf'a aittir.</p>
+<h2>7. Değişiklikler ve iletişim</h2><p>Koşullar değişirse yeni hali bu sayfada yayımlanır. Soruların için: <a href="mailto:whyasaf.wa@gmail.com">whyasaf.wa@gmail.com</a></p></article><article data-doc="kosullar" lang="en"><h1>Terms of Use</h1><p class="upd">Last updated: 7 November 2026</p><p class="lead">By using Lecmic you accept these terms. We kept them short; they take two minutes to read.</p>
+<h2>1. Beta version</h2><p>Lecmic is free and in beta. It is provided as is, with no guarantee that it will work without errors or interruptions. Features may change without notice.</p>
+<h2>2. Automatic text</h2><p>Transcripts, translations, word meanings and summaries are generated automatically and may be wrong. Check anything important for an exam or assignment against the source.</p>
+<h2>3. Recording and consent</h2><p>Before recording a lesson or conversation, it is your responsibility to get permission from the speaker and, where needed, from your school. Do not share recordings or transcripts in a way that violates other people's rights.</p>
+<h2>4. Your data and backups</h2><p>Your data stays only on your device. Clearing browser data or changing browser or device can lose it. Back up regularly. whyasaf cannot be held responsible for data loss.</p>
+<h2>5. Third-party services</h2><p>The live transcript and translation work with third-party services such as Google. These services have their own terms and may sometimes be unavailable.</p>
+<h2>6. Source code and brand</h2><p>Lecmic's source code is open under the MIT license and can be viewed on GitHub. The "Lecmic" name and logo belong to whyasaf.</p>
+<h2>7. Changes and contact</h2><p>If these terms change, the new version is published on this page. Questions: <a href="mailto:whyasaf.wa@gmail.com">whyasaf.wa@gmail.com</a></p></article>
+  </div>
+</dialog>
+
+<dialog id="tourDlg" class="tour" aria-labelledby="tourT0" tabindex="-1">
+  <section data-step="0">
+    <div class="tr-art"><span class="tr-tile"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 12.5h8M8 15.5h5" opacity=".7"/></svg></span></div>
+    <small class="tr-n">1 / 3</small>
+    <h2 id="tourT0">Önce bir ders aç</h2>
+    <p>Soldaki <b>+ Yeni ders</b> ile “Fizik 101” gibi bir ders aç. O dersin PDF'leri ve kayıtları hep onun altında durur.</p>
+  </section>
+  <section data-step="1" hidden>
+    <div class="tr-art"><span class="tr-tile"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="2.5" width="7" height="12.5" rx="3.5"/><path d="M10.9 6.5h2.2M10.9 9h2.2M10.9 11.5h2.2" opacity=".7"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5"/></svg></span></div>
+    <small class="tr-n">2 / 3</small>
+    <h2 id="tourT1">Kaydet ya da oku</h2>
+    <p>Derste <b>Kaydı başlat</b>'a bas: hoca konuştukça yazıya döker ve çevirir. Okuyacağın bir şey varsa üstteki <b>+ Ekle</b>'den PDF aç.</p>
+  </section>
+  <section data-step="2" hidden>
+    <div class="tr-art"><span class="tr-tile"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 8 7l4 11M5.5 14.5h5"/><path d="M14.5 9h5.5M14.5 13h5.5M14.5 17h3.5" opacity=".7"/></svg></span></div>
+    <small class="tr-n">3 / 3</small>
+    <h2 id="tourT2">Bilmediğin kelimeye tıkla</h2>
+    <p>Anlamı o cümleye göre çıkar. Deftere ekle, notlarına al. Hepsi bu cihazda kalır.</p>
+  </section>
+  <div class="tr-foot">
+    <button class="btn" id="tourSkip">Atla</button>
+    <div class="tr-dots"><i class="on"></i><i></i><i></i></div>
+    <button class="btn primary" id="tourNext">Devam</button>
+  </div>
 </dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
@@ -318,6 +565,7 @@
 <script src="js/import.js"></script>
 <script src="js/summary.js"></script>
 <script src="js/doc.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

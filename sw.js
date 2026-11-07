@@ -1,5 +1,5 @@
 // önce internetten dener, olmazsa kayıtlı halini açar
-const CACHE = 'lecmic-v2';
+const CACHE = 'lecmic-v3';
 const CORE = [
   './',
   'index.html',
@@ -15,6 +15,7 @@ const CORE = [
   'js/import.js',
   'js/summary.js',
   'js/doc.js',
+  'js/settings.js',
   'js/main.js',
   'icons/icon.svg',
   'icons/icon-192.png',

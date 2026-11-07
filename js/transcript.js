@@ -3,14 +3,9 @@ function applyTheme() {
   const t = lsGet('ders-theme', '');
   if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
 }
-$('theme').onclick = () => {
-  const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-  lsSet('ders-theme', cur === 'dark' ? 'light' : 'dark'); applyTheme();
-};
 let fs = +lsGet('ders-fs', 20);
 function applyFs() { document.documentElement.style.setProperty('--fs', fs + 'px'); }
 function bumpFs(d) { fs = Math.min(36, Math.max(13, fs + d)); lsSet('ders-fs', fs); applyFs(); }
-$('fsPlus').onclick = () => bumpFs(2); $('fsMinus').onclick = () => bumpFs(-2);
 
 function setSide(open) { $('app').classList.toggle('side-closed', !open); lsSet('ders-side', open ? '1' : '0'); }
 $('sideToggle').onclick = () => setSide($('app').classList.contains('side-closed'));
@@ -38,9 +33,11 @@ function makeSplit(handle, parent, axis, key, apply, min = .2, max = .8) {
     handle.addEventListener('pointermove', mv); handle.addEventListener('pointerup', up);
     document.body.classList.add('dragging'); e.preventDefault();
   });
+  // çift tıklayınca ilk haline döner
+  handle.addEventListener('dblclick', () => { apply(null); lsSet(key, ''); });
 }
-const applyV = f => { $('main').style.gridTemplateColumns = f + 'fr 10px ' + (1 - f) + 'fr'; };
-const applyH = f => { $('left').style.gridTemplateRows = f + 'fr 10px ' + (1 - f) + 'fr'; };
+const applyV = f => { $('main').style.gridTemplateColumns = f == null ? '' : f + 'fr 10px ' + (1 - f) + 'fr'; };
+const applyH = f => { $('left').style.gridTemplateRows = f == null ? '' : f + 'fr 10px ' + (1 - f) + 'fr'; };
 makeSplit($('splitV'), $('main'), 'x', 'ders-sv', applyV, .3, .85);
 makeSplit($('splitH'), $('left'), 'y', 'ders-sh', applyH, .15, .85);
 
@@ -99,8 +96,11 @@ function updateLangLabel() {
   const l = L();
   $('langLabel').textContent = (l.src || 'en').toUpperCase() + (trOn ? ' \u2192 ' + l.lang.toUpperCase() : '');
 }
+// en son çizilen ders ve cümle sayısı. sadece yeni gelen cümle kayarak belirsin, ders değişince değil
+let segSeen = { id:null, n:0 };
 function renderSegments() {
-  const l = L(), withAudio = new Set(l.recs.map(r => r.id));
+  const l = L(), withAudio = new Set(l.recs.map(r => r.id)), fresh = segSeen.id === l.id ? segSeen.n : Infinity;
+  segSeen = { id:l.id, n:l.segs.length };
   let en = '', tr = '', n = 0;
   l.segs.forEach((s, i) => {
     if (!segVisible(s)) return;
@@ -108,8 +108,9 @@ function renderSegments() {
     const acts = (withAudio.has(s.rec) ? '<button class="icon b-play" data-act="play" title="' + T('Bu cümleyi kayıttan dinle') + '">' + IC.play + '</button>' : '')
       + '<button class="icon b-star" data-act="star" title="' + T('Önemli olarak işaretle') + '">' + IC.star + '</button>'
       + '<button class="icon b-note" data-act="note" title="' + T('Nota ekle') + '">' + IC.note + '</button>';
-    en += '<div class="seg' + (s.star ? ' star' : '') + '" data-i="' + i + '"><span class="ts">' + (s.t != null ? fmt(s.t) : '') + '</span><p class="txt">' + wordsHTML(s.en) + '</p><span class="acts">' + acts + '</span></div>';
-    tr += '<div class="seg' + (s.star ? ' star' : '') + '" data-i="' + i + '"><p class="txt">' + esc(s.tr == null ? '...' : s.tr) + '</p></div>';
+    const nw = i >= fresh ? ' new' : '';
+    en += '<div class="seg' + (s.star ? ' star' : '') + nw + '" data-i="' + i + '"><span class="ts">' + (s.t != null ? fmt(s.t) : '') + '</span><p class="txt">' + wordsHTML(s.en) + '</p><span class="acts">' + acts + '</span></div>';
+    tr += '<div class="seg' + (s.star ? ' star' : '') + nw + '" data-i="' + i + '"><p class="txt">' + esc(s.tr == null ? '...' : s.tr) + '</p></div>';
   });
   $('enList').innerHTML = en; $('trList').innerHTML = tr;
   const e = $('enEmpty');
@@ -123,7 +124,7 @@ function renderSegments() {
 // tek çeviriyi yerinde günceller, hepsini baştan çizmez
 function setTrText(i) {
   const s = L().segs[i], el = $('trList').querySelector('[data-i="' + i + '"] .txt');
-  if (el && s) el.textContent = s.tr == null ? '...' : s.tr;
+  if (el && s) { el.textContent = s.tr == null ? '...' : s.tr; replay(el, 'arrive'); }
   autoscroll();
 }
 
@@ -205,6 +206,7 @@ $('enList').addEventListener('click', e => {
     if (b.dataset.act === 'star') {
       s.star = !s.star; save();
       document.querySelectorAll('.seg[data-i="' + i + '"]').forEach(x => x.classList.toggle('star', s.star));
+      if (s.star) replay(b, 'pop');
       if (filt.star) renderSegments();
     } else if (b.dataset.act === 'note') quoteToNotes(s);
     else if (b.dataset.act === 'play') playSeg(s);
@@ -217,17 +219,24 @@ $('enList').addEventListener('click', e => {
 async function showWord(el, seg) {
   const word = el.textContent, l = L(), pop = $('pop');
   const r = el.getBoundingClientRect();
-  pop.hidden = false;
-  pop.style.left = Math.max(8, Math.min(innerWidth - 276, r.left)) + 'px';
-  pop.style.top = Math.min(innerHeight - 170, r.bottom + 8) + 'px';
   const known = () => l.vocab.some(v => v.w.toLowerCase() === word.toLowerCase());
-  pop.innerHTML = '<div class="pw">' + esc(word) + '</div><div class="pm" id="pm" dir="' + (l.lang === 'ur' ? 'rtl' : 'ltr') + '">...</div>'
-    + '<div class="pb"><button class="btn sm" id="pSay">Söyle</button><button class="btn sm primary" id="pAdd">' + (known() ? 'Defterde' : 'Defterime ekle') + '</button></div>';
+  // anlam gelene kadar parıldayan satır. kutu açıksa yeni boyutuna yumuşakça geçer
+  morph(pop, () => {
+    pop.innerHTML = '<div class="pw">' + esc(word) + '</div><div class="pm" id="pm" dir="' + (l.lang === 'ur' ? 'rtl' : 'ltr') + '"><div class="tsk"></div></div>'
+      + '<div class="pb"><button class="btn sm" id="pSay">Söyle</button><button class="btn sm primary" id="pAdd">' + (known() ? 'Defterde' : 'Defterime ekle') + '</button></div>';
+  });
+  place(pop, Math.max(8, Math.min(innerWidth - 298, r.left)), Math.min(innerHeight - 170, r.bottom + 8));
+  pop.hidden = false;
   $('pAdd').disabled = known();
   $('pSay').onclick = () => { try { const u = new SpeechSynthesisUtterance(word); u.lang = 'en-US'; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch {} };
+  // cümlenin çevirisi zaten var, kelimenin o cümledeki anlamını seç
   let meaning = '';
-  try { meaning = await translateWord(word, l.lang); } catch { meaning = '(çeviri alınamadı)'; }
-  const pm = $('pm'); if (pm) pm.textContent = meaning;
+  try {
+    const tr = seg && seg.tr && !/^\(/.test(seg.tr) ? seg.tr : '';
+    const r = await wordInContext(word, seg ? seg.en : '', l.lang, l.src || 'en', tr);
+    meaning = r.main;
+    const pm = $('pm'); if (pm) morph(pop, () => { pm.innerHTML = '<div class="tin">' + meaningHTML(r, false) + '</div>'; });
+  } catch { meaning = '(çeviri alınamadı)'; const pm = $('pm'); if (pm) morph(pop, () => { pm.textContent = T(meaning); }); }
   $('pAdd').onclick = () => {
     if (!known()) { l.vocab.push({ w:word, m:meaning, ex:seg ? seg.en : '' }); save(); renderVocab(); toast('Kelime defterine eklendi'); }
     pop.hidden = true;
@@ -235,5 +244,5 @@ async function showWord(el, seg) {
 }
 document.addEventListener('mousedown', e => {
   if (!e.target.closest('#pop') && !e.target.closest('.w')) $('pop').hidden = true;
-  if (!e.target.closest('.menu')) { $('exportMenu').hidden = true; $('setPop').hidden = true; }
+  if (!e.target.closest('.menu')) closeMenus();
 });
