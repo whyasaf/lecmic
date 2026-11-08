@@ -4,7 +4,7 @@
   "description": "Ders kaydı, canlı çeviri, notlar. Hepsi tek yerde.",
   "id": "/",
   "lang": "tr",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

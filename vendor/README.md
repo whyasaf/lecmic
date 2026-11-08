@@ -11,6 +11,7 @@ kaynaktan aynen indirilir.
 | `mammoth.browser.min.js` | mammoth 1.6.0 | cdnjs `mammoth/1.6.0` | BSD-2-Clause |
 | `lame.min.js` | lamejs 1.2.1 | cdnjs `lamejs/1.2.1` | LGPL-3.0 |
 | `purify.min.js` | DOMPurify 3.4.17 | cdnjs `dompurify/3.4.17` | Apache-2.0 / MPL-2.0 |
+| `fonts/instrument-serif-*.woff2` | Instrument Serif (v5) | Google Fonts (`fonts.gstatic.com`), tanıtım sayfasındaki italik vurgular | OFL-1.1 (`fonts/OFL.txt`) |
 
 pdf.js dosyaları npm paketinden alınıp paketin `integrity` değeriyle doğrulandı. Diğerleri cdnjs'in yayınladığı
 SRI değerleriyle karşılaştırıldı.

@@ -233,9 +233,19 @@ $('ui').addEventListener('change', () => {
 });
 
 // gizlilik ve yasal metinler: ayarların üstüne sağdan kayan okuma paneli. #gizlilik/kvkk gibi adresle de açılır
-function openLegal(doc) {
+// metinlerin tek kopyası /gizlilik sayfasında. panel ilk açılışta oradan alır (service worker önbellekte tutar)
+let legalLoaded = null;
+function loadLegal() {
+  return legalLoaded ||= fetch('/gizlilik').then(r => { if (!r.ok) throw 0; return r.text(); }).then(html => {
+    const arts = new DOMParser().parseFromString(html, 'text/html').querySelectorAll('article[data-doc]');
+    if (!arts.length) throw 0;
+    $('legalBody').replaceChildren(...[...arts].map(a => document.importNode(a, true)));
+  }).catch(() => { legalLoaded = null; $('legalLoad').textContent = T('Metinler yüklenemedi. İnternet bağlantını kontrol et.'); });
+}
+async function openLegal(doc) {
   const d = $('legalDlg');
   if (!d.open) { d.showModal(); d.focus(); }
+  await loadLegal();
   showLegal(doc || 'kvkk');
 }
 let legalDoc = 'kvkk';

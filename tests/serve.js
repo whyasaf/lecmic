@@ -5,14 +5,16 @@ import { readFile } from 'node:fs/promises';
 import { join, extname, normalize } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname, PORT = +process.env.PORT || 4173;
-const TYPES = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.mjs':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.json':'application/json', '.webmanifest':'application/manifest+json', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.ico':'image/x-icon' };
+const TYPES = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.mjs':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.json':'application/json', '.webmanifest':'application/manifest+json', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.ico':'image/x-icon', '.webp':'image/webp', '.woff2':'font/woff2', '.txt':'text/plain; charset=utf-8' };
 const rules = JSON.parse(await readFile(join(ROOT, 'vercel.json'), 'utf8')).headers
   // vercel.json'daki "/vendor/(.*)" gibi kaynaklar: (.*) her şey, diğer noktalar düz nokta
   .map(h => ({ re:new RegExp('^' + h.source.split('(.*)').map(x => x.replace(/[.]/g, '\\.')).join('.*') + '$'), headers:h.headers }));
 
 http.createServer(async (req, res) => {
   const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-  const file = join(ROOT, normalize(path === '/' ? '/index.html' : path));
+  // vercel.json'daki cleanUrls: /app → app.html
+  const clean = path === '/' ? '/index.html' : extname(path) ? path : path + '.html';
+  const file = join(ROOT, normalize(clean));
   const headers = {};
   for (const r of rules) if (r.re.test(path)) for (const h of r.headers) headers[h.key] = h.value;
   try {

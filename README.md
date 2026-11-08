@@ -37,7 +37,7 @@ Dersler İngilizce, bazen anlamıyorsun. Lecmic dersi kaydederken konuşulanı y
 
 ## Nasıl kullanılır
 
-1. [lecmic.whyasaf.com](https://lecmic.whyasaf.com) adresini **Chrome** ya da **Edge** ile aç.
+1. [lecmic.whyasaf.com](https://lecmic.whyasaf.com) adresini **Chrome** ya da **Edge** ile aç ve **Başla**'ya bas. Uygulamanın kendisi [lecmic.whyasaf.com/app](https://lecmic.whyasaf.com/app) adresinde.
 2. Soldan **+ Yeni ders** ile bir ders aç.
 3. **Kaydı başlat**'a bas, mikrofon iznini ver. Ders konuştukça yazı ve çevirisi gelir. Sağ tarafa not al.
 
@@ -104,12 +104,28 @@ npm run e2e     # tarayıcıda smoke testi (Playwright, bilgisayardaki Chrome)
 - **Birim testleri:** Yedekten geri yükleme temizliği (`js/sanitize.js`): HTML içeren kimlikler, notlarda `<script>` ve olay öznitelikleri, `https:` ya da `javascript:` ses adresleri, bozuk dil kodları ve alan türleri. Bir de kelimenin cümledeki anlamı, Google'ın gerçek bir cevabıyla. Testler uygulamanın kendi dosyalarını değiştirmeden yükler.
 - **Smoke testi:** Ders oluştur, not yaz, beklemeden yenile; ders ve not yerinde mi. `vercel.json`'daki başlıklarla (CSP dahil) çalışan küçük bir sunucuya karşı koşar, sayfada hata ya da CSP ihlali olmamalı.
 
+## Bilgisayarda çalıştırmak
+
+`/app` ve `/gizlilik` gibi adresler Vercel'in `cleanUrls` ayarıyla çalışır, VS Code'un Live Server'ı bunları tanımaz. Bunun yerine projedeki küçük sunucuyu kullan, canlı sitedeki gibi çalışır (güvenlik başlıkları dahil):
+
+```
+node tests/serve.js
+```
+
+Sonra `http://localhost:4173` adresini aç.
+
 ## Dosyalar
 
 ```
-index.html            sayfa
+index.html            tanıtım sayfası (/)
+app.html              uygulama (/app)
+gizlilik.html         KVKK, gizlilik, koşullar (/gizlilik). uygulamadaki panel metinleri buradan alır
 404.html              bulunamadı sayfası
-css/app.css           görünüm ve animasyonlar
+css/landing.css       tanıtım ve gizlilik sayfalarının görünümü
+js/site.js            tanıtım ve gizlilik sayfalarında tema, dil ve yönlendirme (head içinde)
+js/landing.js         tanıtım ve gizlilik sayfalarında dil düğmesi, ekran görüntüleri
+img/shots/            tanıtım sayfasının ekran görüntüleri: {tr|en}-{light|dark}-{ad}.webp
+css/app.css           uygulamanın görünümü ve animasyonları
 js/core.js            yardımcılar, ders verisi, ses deposu
 js/i18n.js            arayüz dili
 js/sanitize.js        dışarıdan gelen HTML'i ve yedek dosyasını temizleme (saf fonksiyonlar, testli)

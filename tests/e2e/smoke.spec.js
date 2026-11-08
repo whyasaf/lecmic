@@ -7,7 +7,7 @@ test('ders oluştur, not yaz, yenile: ders ve not yerinde', async ({ page }) => 
   page.on('pageerror', e => problems.push('hata: ' + e.message));
   page.on('console', m => { if (/Content Security Policy/.test(m.text())) problems.push('CSP: ' + m.text()); });
 
-  await page.goto('/index.html');
+  await page.goto('/app');
 
   // ilk açılış rehberi: son adımda kayıt izni onaylanmadan "Başla" açılmaz
   const tour = page.locator('#tourDlg');

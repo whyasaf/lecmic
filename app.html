@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecmic · Ders kaydı, canlı çeviri, notlar</title>
+<meta name="description" content="Ders kaydı, canlı çeviri, notlar. Hepsi tek yerde. İngilizce dersi dinlerken Türkçesini anında oku.">
+<link rel="canonical" href="https://lecmic.whyasaf.com/app">
+<!-- link paylaşınca çıkan önizleme -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Lecmic">
+<meta property="og:url" content="https://lecmic.whyasaf.com/app">
+<meta property="og:title" content="Lecmic · Ders kaydı, canlı çeviri, notlar">
+<meta property="og:description" content="Hepsi tek yerde. İngilizce dersi dinlerken Türkçesini anında oku.">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:image" content="https://lecmic.whyasaf.com/icons/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Lecmic: üstte İngilizce transkript, altta Türkçe çevirisi">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lecmic · Ders kaydı, canlı çeviri, notlar">
+<meta name="twitter:description" content="Hepsi tek yerde. İngilizce dersi dinlerken Türkçesini anında oku.">
+<meta name="twitter:image" content="https://lecmic.whyasaf.com/icons/og.jpg">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#3b6cf5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lecmic">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/app.css">
+<script src="js/boot.js"></script>
+</head>
+<body>
+<div id="splash" aria-hidden="true">
+  <img src="icons/icon.svg" alt="">
+  <div class="sp-name">Lecmic</div>
+  <div class="sp-bar"><i></i></div>
+  <div class="sp-by">© whyasaf</div>
+</div>
+<div id="saveErr" role="alert" hidden>
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.2v.1"/></svg>
+  <span><b>Değişiklikler kaydedilemiyor</b> Cihazda yer kalmamış olabilir. Kaybetmemek için hemen yedek al.</span>
+  <button class="btn sm" id="saveErrBk">Hemen yedek al</button>
+  <button class="btn sm" data-open-set="veri">Ayrıntı</button>
+</div>
+<div id="app" data-mtab="trans">
+  <aside id="side">
+    <div class="brand" id="brand" title="Paneli aç/kapat"><img src="icons/icon.svg" alt="" width="32" height="32"><span>Lecmic</span></div>
+    <div class="side-head">
+      <h2>Dersler</h2>
+      <button class="btn primary sm" id="newLesson" title="Yeni ders"><span class="plus">+</span><span class="lbl"> Yeni ders</span></button>
+    </div>
+    <div id="lessonList"></div>
+    <div class="side-foot">Her ders kendi transkripti, notları, kelimeleri ve ses kaydıyla bu tarayıcıda saklanır.</div>
+  </aside>
+
+  <div id="content">
+    <header id="top">
+      <button class="icon" id="sideToggle" title="Dersler panelini aç/kapat  ( [ )">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button id="crumb" title="Bu belgenin ya da kaydın bulunduğu ders" hidden></button>
+      <input type="text" id="title" class="title" placeholder="Ders adı" title="Ders adını değiştirmek için tıkla">
+      <span class="spacer"></span>
+
+      <div class="menu">
+        <button class="btn" id="langBtn" title="Dil ve görünüm ayarları"><span id="langLabel">EN</span><span class="caret">&#9662;</span></button>
+        <div class="pop form" id="setPop" hidden>
+          <div class="row"><label for="src">Konuşulan dil</label>
+            <select id="src" title="Derste konuşulan dil"><option value="en">English</option><option value="tr">Türkçe</option></select></div>
+          <div class="row"><label><input type="checkbox" id="trToggle"> Çeviri</label>
+            <select id="lang" title="Çeviri dili"></select></div>
+          <div class="row"><label>Çeviri motoru</label><span class="pill" id="engine">...</span></div>
+          <button class="set-more" data-open-set="ders">Diğer ayarlar</button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="btn" id="addBtn" title="Derse ekle"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span class="lbl">Ekle</span></button>
+        <div class="pop list ico" id="addMenu" hidden>
+          <button id="docOpen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v4h4"/><path class="ac" d="M8.5 12h7M8.5 15.5h5"/></svg><span><b>PDF ya da Word aç</b><small>Okurken çevir, işaretle, not al</small></span></button>
+          <button id="addRec"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="2.5" width="7" height="12.5" rx="3.5"/><path class="ac" d="M10.9 6.5h2.2M10.9 9h2.2M10.9 11.5h2.2"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5"/></svg><span><b>Yeni canlı kayıt</b><small>Hoca konuştukça yazıya dök</small></span></button>
+          <button id="impBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2"/><path class="ac" d="M21 12h0"/></svg><span><b>Ses dosyasından transkript</b><small>Hazır bir kaydı yazıya dök</small></span></button>
+        </div>
+      </div>
+      <div class="menu">
+        <button class="icon" id="exportBtn" title="Dışa aktar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M5 13v5a2.5 2.5 0 0 0 2.5 2.5h9A2.5 2.5 0 0 0 19 18v-5"/></svg></button>
+        <div class="pop list" id="exportMenu" hidden>
+          <div class="ph">Dışa aktar</div>
+          <button data-exp="notesdoc">Sadece notlar (.doc)</button>
+          <button data-exp="notestxt">Sadece notlar (.txt)</button>
+          <hr>
+          <button data-exp="doc">Tüm ders: Word (.doc)</button>
+          <button data-exp="pdf">Tüm ders: PDF olarak kaydet</button>
+          <button data-exp="txt">Tüm ders: düz metin (.txt)</button>
+          <button data-exp="mp3">Ses kaydını indir (.mp3)</button>
+        </div>
+      </div>
+      <button class="icon" id="setBtn" title="Ayarlar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2" class="ac"/><circle cx="17" cy="17" r="2"/></svg></button>
+    </header>
+
+    <div id="banner" hidden>
+      <span id="bannerText"></span>
+      <button class="btn sm primary" id="recGet">Kurtar</button>
+      <button class="btn sm" id="recDel">Sil</button>
+    </div>
+
+    <nav id="mtabs">
+      <button data-mtab="trans" class="on">Transkript</button>
+      <button data-mtab="notes">Notlar</button>
+      <button data-mtab="vocab">Kelimeler</button>
+      <button data-mtab="sum">Özet</button>
+      <button data-mtab="marks">İşaretler</button>
+      <button data-mtab="tr">Çeviri</button>
+      <span class="ink"></span>
+    </nav>
+
+    <main id="main">
+      <section id="left">
+        <div class="panel" id="enPanel">
+          <header>
+            <span id="enTitle">English</span>
+            <span class="grow"></span>
+            <input type="search" id="q" placeholder="Ara  ( / )">
+            <button class="chip" id="starFilter" title="Sadece önemli işaretli cümleleri göster">Önemliler</button>
+          </header>
+          <div class="body" id="en">
+            <div id="enList"></div>
+            <div class="seg interim" id="enInt" hidden></div>
+            <div class="empty" id="enEmpty"></div>
+          </div>
+        </div>
+        <div class="split h" id="splitH" title="Sürükle · çift tıkla: sıfırla"></div>
+        <div class="panel" id="trPanel">
+          <header><span id="trTitle">Türkçe</span></header>
+          <div class="body" id="tr">
+            <div id="trList"></div>
+            <div class="seg interim" id="trInt" hidden></div>
+          </div>
+        </div>
+        <div class="panel" id="docPanel">
+          <header>
+            <span class="docname" id="docName"></span>
+            <span class="grow"></span>
+            <label id="docHoverL"><input type="checkbox" id="docHover"> Kelime anlamı (üstüne gelince)</label>
+            <button class="icon sm" id="docMinus" title="Küçült">&minus;</button>
+            <button class="icon sm" id="docPlus" title="Büyüt">+</button>
+            <button class="chip" id="docFit" title="Genişliğe sığdır">Sığdır</button>
+            <span class="pgnav"><input type="text" id="docPage" size="3" inputmode="numeric"> / <span id="docTotal">0</span></span>
+          </header>
+          <div class="body docbody" id="docBody"><div id="docPages"></div></div>
+          <div id="selbar" hidden></div>
+        </div>
+        <button class="btn primary sm" id="live" hidden>Canlıya dön &#8595;</button>
+      </section>
+
+      <div class="split v" id="splitV" title="Sürükle · çift tıkla: sıfırla"></div>
+
+      <section class="panel" id="right" data-tab="notes">
+        <div class="tabs">
+          <button class="tab on" data-tab="notes" title="Notlar"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h11A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-13A2.5 2.5 0 0 1 6.5 3z"/><path class="ac" d="M8 8h8M8 12h8M8 16h5"/></svg><span class="tl">Notlar</span></button>
+          <button class="tab" data-tab="vocab" title="Kelimeler"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 8 7l4 11M5.5 14.5h5"/><path class="ac" d="M14.5 9h5.5M14.5 13h5.5M14.5 17h3.5"/></svg><span class="tl">Kelimeler</span><span id="vCount"></span></button>
+          <button class="tab" data-tab="sum" title="Özet"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 10.5h16M4 15h10"/><path class="ac" d="M17 15.5l1.2 2.3 2.3 1.2-2.3 1.2-1.2 2.3-1.2-2.3-2.3-1.2 2.3-1.2z" stroke-width="1.4"/></svg><span class="tl">Özet</span></button>
+          <button class="tab" data-tab="marks" title="İşaretler"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5 19.5 9.5 11 18H6v-5z"/><path class="ac" d="M4 21h16" stroke-width="2.4"/></svg><span class="tl">İşaretler</span><span id="mkCount"></span></button>
+          <button class="tab" data-tab="tr" title="Çeviri"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h9M8 3.5v2M5.5 5.5c.6 3 2.6 5 5.5 6M10.5 5.5c-.6 3.2-3 5.7-6.5 6.7"/><path class="ac" d="M12.5 20.5l3.8-9 3.8 9M13.9 17.3h4.8"/></svg><span class="tl">Çeviri</span></button>
+          <span class="ink"></span>
+        </div>
+        <div class="pane" id="paneNotes">
+          <div class="tools" id="tools">
+            <select data-block title="Paragraf stili">
+              <option value="p">Normal</option><option value="h1">Başlık 1</option>
+              <option value="h2">Başlık 2</option><option value="h3">Başlık 3</option>
+            </select>
+            <span class="sep"></span>
+            <button data-cmd="bold" title="Kalın (Ctrl+B)" class="tb"><b>B</b></button>
+            <button data-cmd="italic" title="İtalik (Ctrl+I)" class="tb"><i>I</i></button>
+            <button data-cmd="underline" title="Altı çizili (Ctrl+U)" class="tb"><u>U</u></button>
+            <button data-hl title="Vurgula"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5 19.5 9.5 11 18H6v-5z"/><path class="ac" d="M4 21h16" stroke-width="2.4"/></svg></button>
+            <span class="sep"></span>
+            <button data-cmd="insertUnorderedList" title="Madde işaretli liste"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6.5h11M9.5 12h11M9.5 17.5h11"/><circle class="acf" cx="4.5" cy="6.5" r="1.3"/><circle class="acf" cx="4.5" cy="12" r="1.3"/><circle class="acf" cx="4.5" cy="17.5" r="1.3"/></svg></button>
+            <button data-cmd="insertOrderedList" title="Numaralı liste"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6.5h10.5M10 12h10.5M10 17.5h10.5"/><path class="ac" d="M4 5l1.5-1v5M3.8 14.5c.3-.9 2.4-1 2.4.3 0 1-2.4 1.6-2.4 3h2.6" stroke-width="1.5"/></svg></button>
+            <span class="tgrow"></span>
+            <div class="tmore-w">
+              <button data-more title="Diğer araçlar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button>
+              <div class="tmore" id="toolsMore" hidden>
+                <button data-todo><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path class="ac" d="M8 12.3l2.7 2.7L16 9.5" stroke-width="2"/></svg>İşaretli kutu</button>
+                <button data-cmd="strikeThrough"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M16 7.5c-.6-1.6-2.2-2.5-4.2-2.5-2.5 0-4.1 1.3-4.1 3.1 0 1.2.7 2.1 2.2 2.7M8 16c.5 1.8 2.2 3 4.3 3 2.6 0 4.2-1.3 4.2-3.2 0-.7-.2-1.3-.6-1.8"/></svg>Üstü çizili</button>
+                <button data-cmd="outdent"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6.5h9M11 12h9M11 17.5h9M3.5 6.5h3"/><path class="ac" d="M7 9.5 4 12l3 2.5"/></svg>Girintiyi azalt</button>
+                <button data-cmd="indent"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6.5h9M11 12h9M11 17.5h9M3.5 6.5h3"/><path class="ac" d="M4 9.5 7 12l-3 2.5"/></svg>Girintiyi artır</button>
+                <button data-cmd="insertHorizontalRule"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12h17"/><path class="ac" d="M7 6.5h10M7 17.5h7"/></svg>Ayırıcı çizgi</button>
+                <button data-time><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path class="ac" d="M12 7.5V12l3 2"/></svg>Saat ekle</button>
+                <button data-cmd="removeFormat"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5h12M12 5l-3 14M8.5 19h5"/><path class="ac" d="M15.5 14.5l5 5M20.5 14.5l-5 5"/></svg>Biçimi temizle</button>
+                <hr>
+                <button data-cmd="undo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 5 4 9.5 8.5 14"/><path d="M4.5 9.5H14a6 6 0 0 1 0 12h-3"/></svg>Geri al</button>
+                <button data-cmd="redo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 5 20 9.5 15.5 14"/><path d="M19.5 9.5H10a6 6 0 0 0 0 12h3"/></svg>Yinele</button>
+              </div>
+            </div>
+          </div>
+          <div id="notes" contenteditable="true" spellcheck="true" data-placeholder="Notlarını buraya yaz. Soldaki bir cümlenin yanındaki not düğmesine basarsan cümle buraya alıntı olarak eklenir."></div>
+          <div class="nfoot"><span id="count"></span></div>
+        </div>
+        <div class="pane" id="paneVocab" hidden>
+          <form class="vadd" id="vForm">
+            <input type="text" id="vInput" placeholder="Kelime ekle (İngilizce)" autocomplete="off">
+            <button class="btn primary sm" type="submit">Ekle</button>
+          </form>
+          <div class="vbar" id="vBar" hidden><span id="vDue"></span><button class="btn sm" id="vStudy"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3.5" width="13" height="16" rx="3"/><path d="M4 7.5v10A3 3 0 0 0 7 20.5h8"/><path d="M10.5 9h6M10.5 12.5h4" opacity=".75"/></svg>Çalış</button></div>
+          <div id="vocabList"></div>
+        </div>
+        <div class="pane" id="paneSum" hidden>
+          <div class="sumbar">
+            <button class="btn primary sm" id="sumGo">Özet çıkar</button>
+            <button class="btn sm" id="sumNote">Nota ekle</button>
+            <button class="btn sm" id="sumDel" hidden>Sil</button>
+            <span class="pill" id="sumEngine" hidden></span>
+          </div>
+          <div id="sumBody"></div>
+        </div>
+        <div class="pane" id="paneMarks" hidden>
+          <div id="marksList"></div>
+        </div>
+        <div class="pane" id="paneTr" hidden>
+          <div class="gt">
+            <div class="gtl">
+              <select id="gtFrom" title="Kaynak dil"></select>
+              <button class="icon" id="gtSwap" title="Dilleri değiştir"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></button>
+              <select id="gtTo" title="Hedef dil"></select>
+            </div>
+            <div class="gtbox">
+              <textarea id="gtIn" maxlength="5000" placeholder="Çevirmek istediğin metni yaz ya da yapıştır"></textarea>
+              <div class="gtbar">
+                <button class="icon sm" id="gtSayIn" title="Dinle"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+                <span id="gtDet"></span><span class="grow"></span>
+                <span id="gtCount">0 / 5000</span>
+                <button class="icon sm" id="gtClear" title="Temizle" hidden><svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+              </div>
+            </div>
+            <div class="gtbox out">
+              <div id="gtOut" data-placeholder="Çeviri"></div>
+              <div class="gtbar">
+                <button class="icon sm" id="gtSayOut" title="Dinle"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+                <span class="grow"></span>
+                <button class="btn sm" id="gtCopy">Kopyala</button>
+                <button class="btn sm" id="gtNote">Nota ekle</button>
+                <button class="btn sm" id="gtWord" hidden>Deftere ekle</button>
+              </div>
+            </div>
+            <div id="gtDict"></div>
+            <div id="gtHistBox" hidden>
+              <div class="gthh"><span>Son çeviriler</span><button class="btn sm" id="gtHistClear">Temizle</button></div>
+              <div id="gtHist"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer id="dock">
+      <div id="recbar">
+        <button class="btn primary big" id="rec">Kaydı başlat</button>
+        <button class="btn" id="pause" disabled>Duraklat</button>
+        <span id="timer">00:00</span>
+        <span class="meter" title="Mikrofon seviyesi"><i id="meterBar"></i></span>
+        <span id="status"></span>
+      </div>
+      <div id="playerBar" hidden>
+        <button class="icon" id="pBack" title="10 sn geri"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+        <button class="pplay" id="pPlay" title="Oynat / durdur"><svg class="i-play" viewBox="0 0 24 24" width="18" height="18"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg><svg class="i-pause" viewBox="0 0 24 24" width="18" height="18"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg></button>
+        <button class="icon" id="pFwd" title="10 sn ileri"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+        <span class="ptime" id="pCur">00:00</span>
+        <input type="range" id="pSeek" min="0" max="1000" step="1" value="0" title="Kayıtta ilerle">
+        <span class="ptime" id="pDur">00:00</span>
+        <select id="pRate" title="Dinleme hızı"><option value="1">1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
+        <select id="recSel" title="Ses kaydı"></select>
+        <button class="btn sm" id="recName" title="Seçili kaydın adını değiştir">Adlandır</button>
+        <audio id="player" preload="metadata"></audio>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<input type="file" id="docFile" accept=".pdf,.docx,application/pdf" multiple hidden>
+<div id="fMenu" hidden></div>
+<div id="tip" hidden></div>
+<input type="file" id="bkFile" accept=".json,application/json" hidden>
+<div id="scrim"></div>
+<div id="pop" hidden></div>
+<div id="toast"></div>
+
+<dialog id="impDlg">
+  <h3>Ses dosyasından transkript</h3>
+  <p style="color:var(--muted);font-size:13px;margin:0 0 6px">Hazır bir ders kaydını yazıya dökerim. Her şey bilgisayarında çalışır, ses internete gönderilmez. Model ilk kullanımda bir kere indirilir. Çalışırken bu sekmeyi kapatma.</p>
+  <label>Ses dosyası (mp3, m4a, wav, mp4...)</label>
+  <label class="drop" id="impDrop">
+    <input type="file" id="impFile" accept="audio/*,video/*" hidden>
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+    <b id="impFname">Dosya seç ya da buraya sürükle</b>
+    <small id="impFsize">mp3, m4a, wav, mp4...</small>
+  </label>
+  <label>Konuşma dili</label>
+  <select id="impLang"><option value="en">English</option><option value="tr">Türkçe</option></select>
+  <label>Kalite</label>
+  <select id="impQ">
+    <option value="tiny">Hızlı (küçük model, ~40 MB, daha çok hata)</option>
+    <option value="base" selected>Dengeli (~80 MB)</option>
+    <option value="small">Doğru (~250 MB, yavaş)</option>
+  </select>
+  <progress id="impProg" max="1" hidden style="width:100%;margin-top:14px"></progress>
+  <div id="impMsg" style="min-height:1.4em;margin:8px 0;font-size:14px"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn primary" id="impGo">Başlat</button>
+    <button class="btn" id="impStop" hidden>Durdur</button>
+    <button class="btn" id="impClose">Kapat</button>
+  </div>
+</dialog>
+
+<dialog id="askDlg">
+  <h3 id="askMsg"></h3>
+  <p id="askSub" hidden></p>
+  <input type="text" id="askIn" hidden>
+  <div class="askbtns">
+    <button class="btn" id="askNo">Vazgeç</button>
+    <button class="btn primary" id="askOk">Tamam</button>
+  </div>
+</dialog>
+
+<dialog id="setDlg" class="sheet" aria-labelledby="setTitle" tabindex="-1">
+  <div class="sh">
+    <nav class="sh-nav">
+      <div class="sh-brand"><img src="icons/icon.svg" alt="" width="34" height="34"><div><b id="setTitle">Ayarlar</b></div>
+        <button class="icon sh-x" id="setClose2" title="Kapat"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <button data-sec="genel"><span class="sni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="5.5"/><circle cx="12" cy="12" r="4.3"/><path class="acf" d="M12 7.7a4.3 4.3 0 0 1 0 8.6z"/></svg></span><span class="snt"><b>Genel</b><small>Dil, tema, yazı</small></span></button>
+      <button data-sec="ders"><span class="sni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h7a2.5 2.5 0 0 1 2.5 2.5v3A2.5 2.5 0 0 1 12 11H7.5L4.5 13v-2.2A2.5 2.5 0 0 1 2.5 8.5v-3A2.5 2.5 0 0 1 5 3z"/><path d="M5.8 6.2h5M5.8 8.3h3"/><path class="acs" d="M12 13h7a2.5 2.5 0 0 1 2.5 2.5v3A2.5 2.5 0 0 1 19.5 21v2.2L16.5 21H12a2.5 2.5 0 0 1-2.5-2.5v-3A2.5 2.5 0 0 1 12 13z"/><path class="ac" d="M12.8 16.2h5.5M12.8 18.3h3.5"/></svg></span><span class="snt"><b>Ders ve çeviri</b><small>Diller, çeviri motoru</small></span></button>
+      <button data-sec="mikrofon"><span class="sni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="2.5" width="7" height="12.5" rx="3.5"/><path class="ac" d="M10.9 6.5h2.2M10.9 9h2.2M10.9 11.5h2.2"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5M9 21.5h6"/></svg></span><span class="snt"><b>Mikrofon</b><small>Test, ses ayarı</small></span></button>
+      <button data-sec="veri"><span class="sni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="6" rx="2.5"/><path d="M5.5 9.5v8A2.5 2.5 0 0 0 8 20h8a2.5 2.5 0 0 0 2.5-2.5v-8"/><path class="ac" d="M10 13.5h4"/></svg></span><span class="snt"><b>Veri</b><small>Yedek, alan, silme</small></span></button>
+      <button data-sec="destek"><span class="sni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4h13A2.5 2.5 0 0 1 21 6.5v8.5a2.5 2.5 0 0 1-2.5 2.5H12l-4.5 3.5v-3.5h-2A2.5 2.5 0 0 1 3 15V6.5A2.5 2.5 0 0 1 5.5 4z"/><path class="ac" d="M9.8 9.3a2.3 2.3 0 1 1 3.2 2.1c-.6.3-1 .8-1 1.5"/><circle class="acf" cx="12" cy="15" r=".6"/></svg></span><span class="snt"><b>Destek</b><small>Sorun bildir, SSS</small></span></button>
+      <div class="sh-foot">Lecmic · © whyasaf</div>
+    </nav>
+    <div class="sh-main">
+      <header class="sh-head">
+        <button class="icon sh-back" id="setBack" title="Geri dön"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <h2 id="secTitle">Genel</h2>
+        <button class="icon" id="setClose" title="Kapat"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </header>
+      <div class="sh-body" id="setBody">
+
+        <section data-sec="genel">
+          <div class="srow"><div class="sl"><b>Arayüz dili</b><small>Menüler ve düğmeler</small></div><div class="sc"><select id="ui"><option value="tr">Türkçe</option><option value="en">English</option></select></div></div>
+          <div class="srow col"><div class="sl"><b>Tema</b></div>
+            <div class="themes" id="themePick">
+              <button data-v="light"><span class="tpv tl"><i></i><i></i><i></i></span>Açık</button>
+              <button data-v="dark"><span class="tpv td"><i></i><i></i><i></i></span>Koyu</button>
+              <button data-v=""><span class="tpv ts"><i></i><i></i><i></i></span>Cihaza göre</button>
+            </div>
+          </div>
+          <div class="srow col"><div class="sl"><b>Yazı boyutu</b><small>Transkript ve çeviri yazısı</small></div>
+            <div class="fsr"><span class="fsa">A</span><input type="range" id="fsRange" min="13" max="36" step="1"><span class="fsa big">A</span><output id="fsVal"></output></div>
+            <div class="fsp" id="fsPrev"><span class="ts">00:42</span><p>The lecture starts with a short review.</p><p class="fpt">Ders kısa bir tekrarla başlıyor.</p></div>
+          </div>
+          <div class="srow"><div class="sl"><b>Animasyonlar</b><small>Cihazında "hareketi azalt" açıksa zaten kapalıdır</small></div><div class="sc"><div class="segc" id="motionPick"><button data-v="full">Tam</button><button data-v="reduce">Azaltılmış</button><i class="segi"></i></div></div></div>
+        </section>
+
+        <section data-sec="ders">
+          <p class="snote">Açık dersin dillerini üstteki dil menüsünden değiştirirsin. Buradakiler yeni açılan derslerde kullanılır.</p>
+          <div class="srow"><div class="sl"><b>Konuşma dili</b><small>Yeni derslerde</small></div><div class="sc"><select id="defSrc"></select></div></div>
+          <div class="srow"><div class="sl"><b>Çeviri dili</b><small>Yeni derslerde</small></div><div class="sc"><select id="defLang"></select></div></div>
+          <div class="card eng" id="engCard"><span class="dot"></span><div><b id="engTitle"></b><small id="engSub"></small></div></div>
+          <div class="srow"><div class="sl"><b>PDF'te kelime anlamı</b><small>Fareyle kelimenin üstüne gelince anlamı çıkar</small></div><div class="sc"><label class="tgl"><input type="checkbox" id="setHover"><span></span></label></div></div>
+        </section>
+
+        <section data-sec="mikrofon">
+          <div class="card mt" id="mtCard">
+            <div class="mth"><div><b>Mikrofon testi</b><small id="mtName">Kayda başlamadan sesin gelip gelmediğine bak.</small></div><button class="btn primary sm" id="mtGo">Testi başlat</button></div>
+            <div class="mtb" id="mtBars"></div>
+            <div class="mts" id="mtState"></div>
+          </div>
+          <div class="srow"><div class="sl"><b>Gürültü bastırma</b><small>Kapalıyken uzaktaki hocanın sesi daha net çıkar. Gürültülü sınıfta aç.</small></div><div class="sc"><label class="tgl"><input type="checkbox" id="setNs"><span></span></label></div></div>
+          <div class="srow"><div class="sl"><b>Dinleme hızı</b><small>Kayıtları dinlerken</small></div><div class="sc"><div class="segc" id="ratePick"><button data-v="1">1×</button><button data-v="1.25">1.25×</button><button data-v="1.5">1.5×</button><button data-v="2">2×</button><i class="segi"></i></div></div></div>
+          <p class="snote">Canlı transkript her zaman bilgisayarın varsayılan mikrofonunu kullanır. Yanlış mikrofon seçiliyse değiştir: Windows'ta Ayarlar → Sistem → Ses → Giriş, Mac'te Sistem Ayarları → Ses → Giriş.</p>
+        </section>
+
+        <section data-sec="veri">
+          <div class="card store">
+            <div class="sth"><b id="stTotal">...</b><small>bu cihazda kullanılıyor</small></div>
+            <div class="stbar" id="stBar"></div>
+            <div class="stleg" id="stLeg"></div>
+          </div>
+          <div class="srow"><div class="sl"><b>Kalıcı depolama</b><small><span id="persistTxt">...</span></small></div><div class="sc"><button class="btn sm" id="persistBtn">İzin ver</button></div></div>
+          <div class="srow col"><div class="sl"><b>Yedek</b><small id="bkLast">...</small></div>
+            <div class="bkb">
+              <button class="btn" id="bkLite">Yedekle (sadece yazılar)</button>
+              <button class="btn" id="bkFull">Yedekle (sesle birlikte)</button>
+              <button class="btn" id="bkRestore">Yedekten geri yükle...</button>
+            </div>
+          </div>
+          <div class="srow"><div class="sl"><b>Haftalık yedek hatırlatması</b><small>Bir haftadır yedek almadıysan küçük bir hatırlatma çıkar</small></div><div class="sc"><label class="tgl"><input type="checkbox" id="setBkRemind"><span></span></label></div></div>
+          <div class="danger-z">
+            <div class="sl"><b>Tüm verileri sil</b><small>Bütün dersler, notlar, kayıtlar ve belgeler bu cihazdan silinir. Geri alınamaz.</small></div>
+            <button class="btn danger-o" id="wipeBtn">Hepsini sil</button>
+          </div>
+        </section>
+
+        <section data-sec="destek">
+          <div class="about">
+            <img src="icons/icon.svg" alt="" width="52" height="52">
+            <div><b>Lecmic</b><span class="ver"></span><small>Gelişmekte olan bir beta. Bir şey ters giderse yaz, düzeltelim.</small></div>
+            <div class="ab-b"><button class="btn sm" id="tourAgain">Kısa rehber</button><a class="btn sm" href="/?tanitim" target="_blank" rel="noopener">Tanıtım sayfası</a></div>
+          </div>
+          <h3 class="sh3">Sorun bildir</h3>
+          <div class="card rep">
+            <div class="segc" id="repType"><button data-v="hata">Hata</button><button data-v="oneri">Öneri</button><button data-v="soru">Soru</button><i class="segi"></i></div>
+            <input type="text" id="repTitle" maxlength="90" placeholder="Başlık: kısaca ne oldu?" autocomplete="off">
+            <textarea id="repMsg" maxlength="1500" placeholder="Ayrıntı: neye basınca, ne bekliyordun, ne çıktı? (isteğe bağlı)"></textarea>
+            <label class="repinfo"><input type="checkbox" id="repDev" checked> <span>Cihaz bilgisini ekle: <em id="repDevTxt"></em></span></label>
+            <div class="repb">
+              <button class="btn primary" id="repSend"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3.5 7.5 12 13l8.5-5.5"/></svg>E-postayla gönder</button>
+              <button class="btn" id="repCopy"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="3"/><path d="M15.5 8.5V6a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5"/></svg>Kopyala</button>
+            </div>
+            <small class="rephint">Gönder'e basınca kendi e-posta uygulaman açılır. Açılmazsa mesajı kopyalayıp <b>whyasaf.wa@gmail.com</b> adresine gönder.</small>
+          </div>
+          <h3 class="sh3">Sık sorulanlar</h3>
+          <div class="faq"><details><summary>Mikrofon ses almıyor, ne yapayım?</summary><p>Önce Mikrofon bölümündeki testi çalıştır. Çubuklar kıpırdamıyorsa sorun bilgisayarın ses ayarındadır. Windows'ta Ayarlar → Sistem → Ses → Giriş, Mac'te Sistem Ayarları → Ses → Giriş'ten doğru mikrofonu seç. Ses hiç gelmiyorsa Windows'ta Ayarlar → Gizlilik ve güvenlik → Mikrofon'dan, Mac'te Sistem Ayarları → Gizlilik ve Güvenlik → Mikrofon'dan tarayıcına izin ver. Canlı transkript her zaman sistemin varsayılan mikrofonunu kullanır.</p></details><details><summary>Neden Chrome kullanmam gerekiyor?</summary><p>Canlı transkript ve cihazda çalışan çeviri Chrome ve Edge'in özellikleri. Safari ve Firefox'ta canlı transkript çalışmaz, ama belge okuma ve notlar çalışır.</p></details><details><summary>Derslerim nerede duruyor?</summary><p>Sadece bu cihazda, bu tarayıcıda. Lecmic'in sunucusu da hesap sistemi de yok. Başka bir cihaza geçmek için Veri bölümünden yedek al, öbür cihazda geri yükle.</p></details><details><summary>Hocamı kaydetmem sorun olur mu?</summary><p>Kaydetmeden önce hocandan izin al. Kayıtlar yalnızca senin cihazında durur, kimseyle paylaşılmaz.</p></details><details><summary>Çeviri bazen çalışmıyor, neden?</summary><p>Önce internetini kontrol et. Aynı ağda çok kişi kullanıyorsa Google kısa süreliğine engelleyebilir, birkaç dakika sonra düzelir. Chrome'un kendi çevirmeni olan dillerde internet gerekmez.</p></details><details><summary>Uygulama olarak nasıl kurarım?</summary><p>Windows'ta ve Mac'te Chrome ya da Edge'in adres çubuğunun sağındaki yükle simgesine bas. Uygulama Başlat menüsüne (Mac'te Uygulamalar'a) eklenir. iPhone'da Safari → Paylaş → Ana Ekrana Ekle. Android'de Chrome menüsü → Uygulamayı yükle.</p></details></div>
+          <h3 class="sh3">Klavye kısayolları<span class="segc" id="keyOs"><button data-v="win">Windows</button><button data-v="mac">Mac</button><i class="segi"></i></span></h3>
+          <div class="keys"><table class="ktab">
+    <tr><td><kbd>Boşluk</kbd></td><td>Kaydı başlat / duraklat / devam</td></tr>
+    <tr><td><kbd class="mod">Ctrl</kbd>+<kbd>Enter</kbd></td><td>Kaydı başlat / bitir</td></tr>
+    <tr><td><kbd>/</kbd> ya da <kbd class="mod">Ctrl</kbd>+<kbd>K</kbd></td><td>Transkriptte ara</td></tr>
+    <tr><td><kbd>[</kbd></td><td>Dersler panelini aç/kapat</td></tr>
+    <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td>Yazıyı büyüt / küçült</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Açık pencereyi kapat</td></tr>
+  </table>
+            <small>Tek tuşlu kısayollar not yazarken ya da kutulara yazarken çalışmaz.</small>
+          </div>
+          <h3 class="sh3">Gizlilik özeti</h3>
+          <div class="card priv">
+            <div><span class="pd ok"></span><p><b>Cihazında kalır:</b> dersler, notlar, kelimeler, ses kayıtları ve belgeler.</p></div>
+            <div><span class="pd gg"></span><p><b>Google'a gider:</b> canlı transkript için ses, çeviri için metin.</p></div>
+            <div><span class="pd mm"></span><p><b>MyMemory'ye gider:</b> Google cevap vermezse çevrilecek metin.</p></div>
+            <div><span class="pd lm"></span><p><b>Lecmic'e gelen:</b> hiçbir şey. Sunucumuz da hesap sistemimiz de yok.</p></div>
+          </div>
+          <div class="legal">
+            <button data-legal="kvkk">KVKK aydınlatma metni</button><button data-legal="gizlilik">Gizlilik politikası</button><button data-legal="kosullar">Kullanım koşulları</button>
+          </div>
+          <h3 class="sh3">Bu sürümde</h3>
+          <ul class="notes09">
+            <li>Derslerin altında birden çok PDF ve kayıt</li>
+            <li>Google Çeviri gibi çeviri sekmesi</li>
+            <li>Kelimenin cümledeki anlamı</li>
+            <li>Yeni oynatıcı, dinleme hızı</li>
+            <li>Mikrofon iyileştirmeleri ve test</li>
+            <li>Animasyonlar</li>
+          </ul>
+          <a class="gh" href="https://github.com/whyasaf/lecmic" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 7 3.5 12l5 5M15.5 7l5 5-5 5M13.5 4.5l-3 15"/></svg><span>Kaynak kodu GitHub'da</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 16 16 8M9.5 8H16v6.5"/></svg></a>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="legalDlg" class="reader" aria-labelledby="legalTitle" tabindex="-1">
+  <header class="rd-head">
+    <div class="rd-top">
+      <button class="icon" id="legalClose" title="Kapat"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <b id="legalTitle">Gizlilik ve koşullar</b>
+    </div>
+    <div class="segc" id="legalTabs"><button data-v="kvkk">KVKK</button><button data-v="gizlilik">Gizlilik</button><button data-v="kosullar">Koşullar</button><i class="segi"></i></div>
+  </header>
+  <div class="rd-body" id="legalBody">
+    <p class="rd-load" id="legalLoad">...</p>
+  </div>
+</dialog>
+
+<dialog id="tourDlg" class="tour" aria-labelledby="tourT0" tabindex="-1">
+  <section data-step="0">
+    <div class="tr-art"><span class="tr-tile"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 12.5h8M8 15.5h5" opacity=".7"/></svg></span></div>
+    <small class="tr-n">1 / 4</small>
+    <h2 id="tourT0">Önce bir ders aç</h2>
+    <p>Soldaki <b>+ Yeni ders</b> ile “Fizik 101” gibi bir ders aç. O dersin PDF'leri ve kayıtları hep onun altında durur.</p>
+  </section>
+  <section data-step="1" hidden>
+    <div class="tr-art"><span class="tr-tile"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="2.5" width="7" height="12.5" rx="3.5"/><path d="M10.9 6.5h2.2M10.9 9h2.2M10.9 11.5h2.2" opacity=".7"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5"/></svg></span></div>
+    <small class="tr-n">2 / 4</small>
+    <h2 id="tourT1">Kaydet ya da oku</h2>
+    <p>Derste <b>Kaydı başlat</b>'a bas: hoca konuştukça yazıya döker ve çevirir. Okuyacağın bir şey varsa üstteki <b>+ Ekle</b>'den PDF aç.</p>
+  </section>
+  <section data-step="2" hidden>
+    <div class="tr-art"><span class="tr-tile"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 8 7l4 11M5.5 14.5h5"/><path d="M14.5 9h5.5M14.5 13h5.5M14.5 17h3.5" opacity=".7"/></svg></span></div>
+    <small class="tr-n">3 / 4</small>
+    <h2 id="tourT2">Bilmediğin kelimeye tıkla</h2>
+    <p>Anlamı o cümleye göre çıkar. Deftere ekle, notlarına al. Hepsi bu cihazda kalır.</p>
+  </section>
+  <section data-step="3" hidden>
+    <div class="tr-art"><span class="tr-tile"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5.5c0 4.4 3 8.2 7 9.5 4-1.3 7-5.1 7-9.5V6z"/><path d="M8.8 12.2l2.3 2.3 4.3-4.6" opacity=".85"/></svg></span></div>
+    <small class="tr-n">4 / 4</small>
+    <h2 id="tourT3">Kaydetmeden önce</h2>
+    <p>Bir dersi kaydetmeden önce hocandan izin al. Canlı transkript için ses Chrome üzerinden Google'a gider, kaydın kendisi sadece bu cihazda kalır.</p>
+    <label class="tr-ok"><input type="checkbox" id="tourOk"><span>Anladım, kaydetmeden önce izin alacağım.</span></label>
+  </section>
+  <div class="tr-foot">
+    <button class="btn" id="tourSkip">Atla</button>
+    <div class="tr-dots"><i class="on"></i><i></i><i></i><i></i></div>
+    <button class="btn primary" id="tourNext">Devam</button>
+  </div>
+</dialog>
+
+<dialog id="cardDlg" class="cards" aria-labelledby="cdTitle" tabindex="-1">
+  <header class="cd-head">
+    <b id="cdTitle">Kelime kartları</b>
+    <span class="segc" id="cdScope"><button data-v="lesson">Bu ders</button><button data-v="all">Tüm dersler</button><i class="segi"></i></span>
+    <button class="icon" id="cdClose" title="Kapat"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </header>
+  <div class="cd-prog"><i id="cdBar"></i><span id="cdNum"></span></div>
+  <div class="cd-stage">
+    <div class="card3d" id="cdCard">
+      <div class="cf front"><small class="cd-src" id="cdSrc"></small><b class="cd-w" id="cdWord"></b><span class="cd-hint">Anlamını hatırla, sonra kartı çevir</span></div>
+      <div class="cf back"><small class="cd-src" id="cdSrc2"></small><b class="cd-w sm" id="cdWord2"></b><p class="cd-m" id="cdMean"></p><p class="cd-ex" id="cdEx"></p></div>
+    </div>
+    <div class="cd-end" id="cdEnd" hidden><span class="cd-mark"></span><b id="cdEndT"></b><p id="cdEndP"></p></div>
+  </div>
+  <footer class="cd-foot">
+    <button class="btn primary big" id="cdFlip">Kartı çevir</button>
+    <div class="cd-ans" id="cdAns" hidden><button class="btn big cd-again" id="cdAgain">Tekrar</button><button class="btn primary big" id="cdKnow">Biliyorum</button></div>
+    <div class="cd-ans" id="cdEndB" hidden><button class="btn big" id="cdDone">Bitir</button><button class="btn primary big" id="cdMore">Bir tur daha</button></div>
+    <small class="cd-keys" id="cdKeys">Boşluk: çevir · 1: tekrar · 2: biliyorum</small>
+  </footer>
+</dialog>
+
+<script src="vendor/purify.min.js"></script>
+<script src="vendor/lame.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/sanitize.js"></script>
+<script src="js/translate.js"></script>
+<script src="js/transcript.js"></script>
+<script src="js/notes.js"></script>
+<script src="js/record.js"></script>
+<script src="js/lessons.js"></script>
+<script src="js/import.js"></script>
+<script src="js/summary.js"></script>
+<script src="js/doc.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
