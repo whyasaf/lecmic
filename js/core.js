@@ -61,6 +61,19 @@ function toast(msg, act) {
   setTimeout(() => { d.classList.add('out'); setTimeout(() => d.remove(), 220); }, act ? 9000 : 3400);
 }
 const VERSION = 'Beta 0.9';
+// dışarıdan gelen HTML (notlar, yapıştırılan içerik, Word belgesi, yedek) temizlenir:
+// betik, olay özniteliği, javascript: bağlantısı kalmaz. notlarda resim de olmaz, yer kaplamasın
+const NOTE_TAGS = ['p', 'div', 'br', 'span', 'b', 'strong', 'i', 'em', 'u', 's', 'strike', 'sub', 'sup', 'mark', 'font', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'hr', 'input', 'a', 'code', 'pre'];
+function cleanHTML(html, doc) {
+  html = String(html || '');
+  if (!window.DOMPurify) return esc(new DOMParser().parseFromString(html, 'text/html').body.textContent || '');
+  if (doc) return DOMPurify.sanitize(html, { FORBID_TAGS:['style', 'form', 'input', 'button', 'textarea', 'select', 'iframe'] });
+  const frag = DOMPurify.sanitize(html, { ALLOWED_TAGS:NOTE_TAGS, ALLOWED_ATTR:['style', 'type', 'checked', 'href', 'dir', 'color'], RETURN_DOM_FRAGMENT:true });
+  // notlardaki tek giriş kutusu yapılacaklar kutusu
+  frag.querySelectorAll('input').forEach(x => { if (x.type !== 'checkbox') x.remove(); });
+  frag.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+  const d = document.createElement('div'); d.append(frag); return d.innerHTML;
+}
 // kısayolların tuşu: Mac'te ⌘, Windows'ta Ctrl (ikisi de çalışır)
 const MOD = IS_MAC ? '⌘' : 'Ctrl';
 if (IS_MAC) {
@@ -110,28 +123,88 @@ function newLesson(word) {
     created: d.getTime(), src: lsGet('ders-src', 'en'), lang: lsGet('ders-lang', 'tr'), segs: [], notes: '', vocab: [], recs: []
   };
 }
-function loadDB() {
-  try { const j = JSON.parse(lsGet('ders-v2', 'null')); if (j && j.lessons && j.lessons.length) { j.folders ||= []; return j; } } catch {}
+// dersler IndexedDB'de, her ders ayrı kayıt. eski sürümler hepsini tek parça localStorage'a yazıyordu (5 MB sınırı),
+// ilk açılışta oradan taşınır. eski kopya ancak taşıma başarıyla yazılınca silinir
+let legacyLS = false;
+async function loadDB() {
+  const db = await idb;
+  if (db) {
+    const lessons = await idbDo('lessons', 'readonly', s => s.getAll()), meta = await idbDo('meta', 'readonly', s => s.get('db'));
+    if (lessons && lessons.length) {
+      const d = { lessons, folders:(meta && meta.folders) || [], cur:meta && meta.cur };
+      if (!lessons.some(l => l.id === d.cur)) d.cur = lessons.reduce((a, b) => (b.created > a.created ? b : a)).id;
+      lessons.forEach(l => written.set(l.id, JSON.stringify(l)));
+      written.set('#meta', JSON.stringify({ cur:d.cur, folders:d.folders }));
+      return d;
+    }
+  }
+  try { const j = JSON.parse(lsGet('ders-v2', 'null')); if (j && j.lessons && j.lessons.length) { j.folders ||= []; legacyLS = true; return j; } } catch {}
   const first = newLesson();
   try { const s = JSON.parse(lsGet('ders-segments', '[]')); if (s.length) first.segs = s; } catch {}
   const n = lsGet('ders-notes-html', ''); if (n) first.notes = n;
   if (first.segs.length || first.notes) first.title = T('Önceki ders');
   return { lessons: [first], folders: [], cur: first.id };
 }
+// dersler yüklenince çözülür. başka dosyalardaki açılış işleri bunu bekler
+let dbLoaded;
+const DBReady = new Promise(r => { dbLoaded = r; });
 // açık olan ders
 const L = () => DB.lessons.find(l => l.id === DB.cur);
-// kaydetmeyi biraz geciktirir, peş peşe yazmasın
-let saveT;
-const saveNow = () => { clearTimeout(saveT); lsSet('ders-v2', JSON.stringify(DB)); };
+// kaydetmeyi biraz geciktirir, peş peşe yazmasın. sadece son yazılandan farklı olan dersler yazılır
+let saveT, IDB = null, saveErr = false;
+const written = new Map();
+function saveNow() {
+  clearTimeout(saveT);
+  if (!DB) return;
+  // IndexedDB yoksa (çok eski tarayıcı) eskisi gibi localStorage, ama hata artık yutulmuyor
+  if (!IDB) { try { localStorage.setItem('ders-v2', JSON.stringify(DB)); saveOk(); } catch (e) { saveFail(e); } return; }
+  const changed = [], ids = new Set(DB.lessons.map(l => l.id));
+  for (const l of DB.lessons) { const j = JSON.stringify(l); if (written.get(l.id) !== j) changed.push([l, j]); }
+  const gone = [...written.keys()].filter(k => k !== '#meta' && !ids.has(k));
+  const meta = JSON.stringify({ cur:DB.cur, folders:DB.folders });
+  if (!changed.length && !gone.length && written.get('#meta') === meta && !legacyLS) return;
+  try {
+    const tx = IDB.transaction(['lessons', 'meta'], 'readwrite'), ls = tx.objectStore('lessons');
+    changed.forEach(([l]) => ls.put(l, l.id));
+    gone.forEach(k => ls.delete(k));
+    tx.objectStore('meta').put(JSON.parse(meta), 'db');
+    tx.oncomplete = () => {
+      changed.forEach(([l, j]) => written.set(l.id, j)); gone.forEach(k => written.delete(k)); written.set('#meta', meta);
+      if (legacyLS) { legacyLS = false; try { localStorage.removeItem('ders-v2'); } catch {} }
+      saveOk();
+    };
+    tx.onerror = tx.onabort = () => saveFail(tx.error);
+  } catch (e) { saveFail(e); }
+}
 const save = () => { clearTimeout(saveT); saveT = setTimeout(saveNow, 300); };
 addEventListener('pagehide', saveNow);
+// kayıt başarısızsa kapanmayan kırmızı uyarı. sessizce veri kaybetmek yerine kullanıcı yedek alabilsin
+function saveFail(e) {
+  console.error('kaydedilemedi', e);
+  saveErr = true;
+  const b = $('saveErr'); if (b) b.hidden = false;
+}
+function saveOk() { if (!saveErr) return; saveErr = false; const b = $('saveErr'); if (b) b.hidden = true; }
 
-// ses dosyaları localStorage'a sığmaz, IndexedDB'de tutuluyor
+// ses dosyaları, belgeler ve dersler IndexedDB'de
 const idb = new Promise(res => {
   try {
-    const r = indexedDB.open('ders-audio2', 1);
-    r.onupgradeneeded = () => { r.result.createObjectStore('chunks', { autoIncrement:true }); r.result.createObjectStore('audio'); };
-    r.onsuccess = () => res(r.result); r.onerror = () => res(null);
+    const r = indexedDB.open('ders-audio2', 2);
+    r.onupgradeneeded = () => {
+      const d = r.result, has = n => d.objectStoreNames.contains(n);
+      if (!has('chunks')) d.createObjectStore('chunks', { autoIncrement:true });
+      if (!has('audio')) d.createObjectStore('audio');
+      if (!has('lessons')) d.createObjectStore('lessons');
+      if (!has('meta')) d.createObjectStore('meta');
+    };
+    r.onsuccess = () => {
+      IDB = r.result; res(r.result);
+      // başka sekmede daha yeni sürüm açılırsa bu bağlantı yolu kapatmasın
+      IDB.onversionchange = () => { saveNow(); IDB.close(); IDB = null; location.reload(); };
+    };
+    r.onerror = () => res(null);
+    // eski sürümün açık sekmesi güncellemeyi bekletirse açılış takılı kalmasın, o sekme kapanana kadar eski yerden çalışır
+    r.onblocked = () => setTimeout(() => res(null), 2500);
   } catch { res(null); }
 });
 function idbDo(store, mode, fn) {

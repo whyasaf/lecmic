@@ -1,5 +1,12 @@
 // belge okuma (PDF / Word)
-const PDF_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+// kütüphaneler repodaki vendor/ klasöründen gelir (bkz. vendor/README.md)
+const VENDOR = new URL('vendor/', document.baseURI).href;
+let PDFJS = null;
+// pdf.js 4 bir ES modülü, ilk PDF açılınca yüklenir
+async function loadPdfjs() {
+  if (!PDFJS) { PDFJS = await import(VENDOR + 'pdfjs/pdf.min.mjs'); PDFJS.GlobalWorkerOptions.workerSrc = VENDOR + 'pdfjs/pdf.worker.min.mjs'; }
+  return PDFJS;
+}
 const MKCOL = { y:'#f5c400', g:'#3dbb78', p:'#ee6fa0' };
 const DOC = { type:'', pdf:null, pages:[], scale:1, io:null, token:0 };
 let reattachFor = null;
@@ -83,9 +90,9 @@ async function loadDoc() {
 }
 
 async function openPdf(blob, token) {
-  await loadScript(PDF_CDN + 'pdf.min.js');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_CDN + 'pdf.worker.min.js';
-  const pdf = await pdfjsLib.getDocument({ data:new Uint8Array(await blob.arrayBuffer()) }).promise;
+  const lib = await loadPdfjs();
+  // isEvalSupported kapalı: PDF'in içinden kod çalıştırılabilen açığa (CVE-2024-4367) karşı ikinci bir kilit
+  const pdf = await lib.getDocument({ data:new Uint8Array(await blob.arrayBuffer()), isEvalSupported:false }).promise;
   if (token !== DOC.token) { pdf.destroy(); return; }
   DOC.pdf = pdf; DOC.type = 'pdf';
   $('docTotal').textContent = pdf.numPages;
@@ -105,11 +112,11 @@ async function openPdf(blob, token) {
   watchPages();
 }
 async function openDocx(blob, token) {
-  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+  await loadScript(VENDOR + 'mammoth.browser.min.js');
   const r = await mammoth.convertToHtml({ arrayBuffer:await blob.arrayBuffer() });
   if (token !== DOC.token) return;
   const el = document.createElement('div');
-  el.className = 'pg docx'; el.dataset.p = 0; el.innerHTML = r.value;
+  el.className = 'pg docx'; el.dataset.p = 0; el.innerHTML = cleanHTML(r.value, true);
   DOC.type = 'docx'; DOC.scale = L().doc.scale || 1;
   el.style.zoom = DOC.scale;
   DOC.pages = [{ el, done:true }];
@@ -144,7 +151,7 @@ async function renderPdfPage(i) {
     const tl = document.createElement('div');
     tl.className = 'textLayer';
     tl.style.setProperty('--scale-factor', vp.scale); // pdf.js yazı boyutunu buradan hesaplıyor, yoksa yazı katmanı görünen metinle örtüşmüyor
-    await pdfjsLib.renderTextLayer({ textContentSource:await pg.page.getTextContent(), container:tl, viewport:vp, textDivs:[] }).promise;
+    await new PDFJS.TextLayer({ textContentSource:await pg.page.getTextContent(), container:tl, viewport:vp }).render();
     if (token !== DOC.token || DOC.pages[i] !== pg) return;
     pg.el.innerHTML = ''; pg.el.append(canvas, tl);
     pg.done = true;
@@ -465,7 +472,7 @@ function renderMarks() {
   const ms = [...(L().marks || [])].sort((a, b) => a.p - b.p || a.s - b.s);
   $('mkCount').textContent = ms.length || '';
   $('marksList').innerHTML = ms.length ? ms.map(m =>
-    '<div class="mk" data-id="' + m.id + '" style="border-left-color:' + MKCOL[m.c] + '"><div class="mkt">' + esc(m.t)
+    '<div class="mk" data-id="' + esc(m.id) + '" style="border-left-color:' + MKCOL[m.c] + '"><div class="mkt">' + esc(m.t)
     + (m.tr ? '<span class="st">' + esc(m.tr) + '</span>' : '') + '</div><div class="mkb"><span class="pgn">s. ' + (m.p + 1)
     + '</span><button data-a="go">Git</button><button data-a="note">Nota ekle</button><button data-a="del">Sil</button></div></div>'
   ).join('') : '<div class="empty">Henüz işaret yok. Belgede bir cümleye tıkla ya da yazıyı seç, çıkan kutudan bir renk seç.</div>';

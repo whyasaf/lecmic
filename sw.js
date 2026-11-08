@@ -1,8 +1,9 @@
 // önce internetten dener, olmazsa kayıtlı halini açar
-const CACHE = 'lecmic-v3';
+const CACHE = 'lecmic-v5';
 const CORE = [
   './',
   'index.html',
+  'js/boot.js',
   'manifest.webmanifest',
   'css/app.css',
   'js/core.js',
@@ -16,6 +17,9 @@ const CORE = [
   'js/summary.js',
   'js/doc.js',
   'js/settings.js',
+  'js/cards.js',
+  'vendor/purify.min.js',
+  'vendor/lame.min.js',
   'js/main.js',
   'icons/icon.svg',
   'icons/icon-192.png',
@@ -36,7 +40,7 @@ self.addEventListener('fetch', e => {
   const r = e.request;
   if (r.method !== 'GET') return;
   const u = new URL(r.url);
-  if (u.origin !== location.origin && u.hostname !== 'cdnjs.cloudflare.com') return;
+  if (u.origin !== location.origin) return;
   e.respondWith(
     fetch(r).then(res => {
       if (res.ok || res.type === 'opaque') { const copy = res.clone(); caches.open(CACHE).then(c => c.put(r, copy)); }

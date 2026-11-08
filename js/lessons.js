@@ -5,20 +5,20 @@ const folderOf = id => DB.folders.find(f => f.id === id);
 const freshIds = new Set();
 let justOpened = null;
 function itemHTML(l) {
-  return '<div class="lesson' + (l.id === DB.cur ? ' on' : '') + (freshIds.has(l.id) ? ' fresh' : '') + '" draggable="true" data-id="' + l.id + '" title="' + esc(l.title) + '"><div class="lb">' + (l.kind === 'doc' ? IC.doc : l.recs.length ? IC.mic : IC.book) + '</div><div class="lt"><div class="ln">' + esc(l.title) + '</div><div class="lm">'
+  return '<div class="lesson' + (l.id === DB.cur ? ' on' : '') + (freshIds.has(l.id) ? ' fresh' : '') + '" draggable="true" data-id="' + esc(l.id) + '" title="' + esc(l.title) + '"><div class="lb">' + (l.kind === 'doc' ? IC.doc : l.recs.length ? IC.mic : IC.book) + '</div><div class="lt"><div class="ln">' + esc(l.title) + '</div><div class="lm">'
     + new Date(l.created).toLocaleDateString(LOC(), { day:'numeric', month:'short' }) + ' · ' + (l.kind === 'doc' ? (l.marks || []).length + ' işaret' : l.segs.length + ' cümle' + (l.recs.length ? ' · ses' : ''))
-    + '</div></div><button class="icon sm del" data-move="' + l.id + '" title="Derse taşı">' + IC.move + '</button><button class="icon sm del" data-del="' + l.id + '" title="' + (l.folder ? 'Sil' : 'Dersi sil') + '">' + IC.trash + '</button></div>';
+    + '</div></div><button class="icon sm del" data-move="' + esc(l.id) + '" title="Derse taşı">' + IC.move + '</button><button class="icon sm del" data-del="' + esc(l.id) + '" title="' + (l.folder ? 'Sil' : 'Dersi sil') + '">' + IC.trash + '</button></div>';
 }
 function folderHTML(f) {
   const kids = DB.lessons.filter(l => l.folder === f.id).sort((a, b) => a.created - b.created);
   const docs = kids.filter(l => l.kind === 'doc').length, recs = kids.length - docs, en = UI === 'en';
   const meta = !kids.length ? (en ? 'empty' : 'boş') : [docs && docs + (en ? ' doc' + (docs > 1 ? 's' : '') : ' belge'), recs && recs + (en ? ' recording' + (recs > 1 ? 's' : '') : ' kayıt')].filter(Boolean).join(' · ');
-  return '<div class="folder' + (f.open ? ' open' : '') + '" data-fid="' + f.id + '">'
+  return '<div class="folder' + (f.open ? ' open' : '') + '" data-fid="' + esc(f.id) + '">'
     + '<div class="lesson frow' + (kids.some(l => l.id === DB.cur) ? ' has-cur' : '') + (freshIds.has(f.id) ? ' fresh' : '') + '" title="' + esc(f.title) + '"><span class="chev">' + IC.chev + '</span><div class="lb">' + IC.folder + '</div><div class="lt"><div class="ln">' + esc(f.title) + '</div><div class="lm">' + meta + '</div></div>'
-    + '<button class="icon sm fa" data-add="' + f.id + '" title="Bu derse ekle">' + IC.plus + '</button>'
-    + '<button class="icon sm del" data-ren="' + f.id + '" title="Adını değiştir">' + IC.pen + '</button>'
-    + '<button class="icon sm del" data-fdel="' + f.id + '" title="Dersi sil">' + IC.trash + '</button></div>'
-    + (f.open ? '<div class="kids' + (justOpened === f.id ? ' opening' : '') + '">' + (kids.length ? kids.map(itemHTML).join('') : '<button class="fempty" data-add="' + f.id + '">+ PDF ya da kayıt ekle</button>') + '</div>' : '') + '</div>';
+    + '<button class="icon sm fa" data-add="' + esc(f.id) + '" title="Bu derse ekle">' + IC.plus + '</button>'
+    + '<button class="icon sm del" data-ren="' + esc(f.id) + '" title="Adını değiştir">' + IC.pen + '</button>'
+    + '<button class="icon sm del" data-fdel="' + esc(f.id) + '" title="Dersi sil">' + IC.trash + '</button></div>'
+    + (f.open ? '<div class="kids' + (justOpened === f.id ? ' opening' : '') + '">' + (kids.length ? kids.map(itemHTML).join('') : '<button class="fempty" data-add="' + esc(f.id) + '">+ PDF ya da kayıt ekle</button>') + '</div>' : '') + '</div>';
 }
 function renderLessons() {
   const loose = DB.lessons.filter(l => !folderOf(l.folder));
@@ -177,7 +177,7 @@ function renderAll() {
   $('title').value = l.title;
   $('left').classList.toggle('en-only', !trOn);
   applyLangStyle(); trInterim = ''; showTrInt();
-  notes.innerHTML = l.notes || ''; updateCount();
+  notes.innerHTML = cleanHTML(l.notes); updateCount();
   renderVocab(); renderSummary(); renderSegments(); renderLessons(); refreshPlayer();
   applyKind(); renderMarks(); loadDoc();
   stick.en = stick.tr = true; autoscroll();
@@ -192,7 +192,7 @@ function lessonHTML() {
     + 'body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.45;color:#111}h1{font-size:20pt;margin-bottom:2pt}h2{font-size:14pt;margin:18pt 0 6pt;border-bottom:1px solid #999}'
     + 'table{border-collapse:collapse;width:100%}td{border:1px solid #bbb;padding:4pt 6pt;vertical-align:top}td.t{width:40pt;color:#666;font-size:9pt}blockquote{border-left:3px solid #3b6cf5;margin:6pt 0;padding-left:8pt;color:#444}'
     + '</style></head><body><h1>' + esc(l.title) + '</h1><div>' + new Date(l.created).toLocaleString(LOC()) + '</div>'
-    + (l.summary ? '<h2>' + T('Özet') + '</h2><ul>' + l.summary.pts.map(p => '<li>' + esc(p.s) + (p.t ? '<br><i>' + esc(p.t) + '</i>' : '') + '</li>').join('') + '</ul>' : '') + '<h2>' + T('Notlar') + '</h2>' + (l.notes || '<p>' + T('(boş)') + '</p>')
+    + (l.summary ? '<h2>' + T('Özet') + '</h2><ul>' + l.summary.pts.map(p => '<li>' + esc(p.s) + (p.t ? '<br><i>' + esc(p.t) + '</i>' : '') + '</li>').join('') + '</ul>' : '') + '<h2>' + T('Notlar') + '</h2>' + (cleanHTML(l.notes) || '<p>' + T('(boş)') + '</p>')
     + (l.vocab.length ? '<h2>' + T('Kelimeler') + '</h2><table>' + vocab + '</table>' : '')
     + (l.marks && l.marks.length ? '<h2>' + T('İşaretler') + '</h2><table>' + l.marks.map(m => '<tr><td class="t">s. ' + (m.p + 1) + '</td><td>' + esc(m.t) + '</td><td dir="' + (rtl ? 'rtl' : 'ltr') + '">' + esc(m.tr || '') + '</td></tr>').join('') + '</table>' : '')
     + (l.segs.length ? '<h2>' + T('Transkript (kalın = önemli)') + '</h2><table>' + rows + '</table>' : '') + '</body></html>';
@@ -212,7 +212,7 @@ $('exportMenu').addEventListener('click', async e => {
   $('exportMenu').hidden = true;
   const l = L();
   if (b.dataset.exp === 'notesdoc') {
-    const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(l.title) + '</title><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.45}blockquote{border-left:3px solid #3b6cf5;margin:6pt 0;padding-left:8pt;color:#444}</style></head><body><h1>' + esc(l.title) + '</h1>' + (l.notes || '<p>' + T('(boş)') + '</p>') + '</body></html>';
+    const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(l.title) + '</title><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.45}blockquote{border-left:3px solid #3b6cf5;margin:6pt 0;padding-left:8pt;color:#444}</style></head><body><h1>' + esc(l.title) + '</h1>' + (cleanHTML(l.notes) || '<p>' + T('(boş)') + '</p>') + '</body></html>';
     download(new Blob(['\ufeff' + html], { type:'application/msword' }), fileName() + '-notlar.doc');
   } else if (b.dataset.exp === 'notestxt') download(new Blob([l.title + '\n\n' + notes.innerText], { type:'text/plain;charset=utf-8' }), fileName() + '-notlar.txt');
   else if (b.dataset.exp === 'doc') download(new Blob(['\ufeff' + lessonHTML()], { type:'application/msword' }), fileName() + '.doc');
@@ -254,26 +254,57 @@ async function makeBackup(withAudio) {
   setStatus(''); toast('Yedek indirildi');
   if ($('setDlg').open && setSec === 'veri') renderData();
 }
+// yedekten gelen veri olduğu gibi alınmaz. başkasının paylaştığı bir yedek de olabilir:
+// kimlikler, dil kodları ve alan türleri kontrol edilir, notlar temizlenir, ses sadece dosyanın içinden (data:) alınır
+const ID_RE = /^[a-z0-9]{1,40}$/i;
+const str = (v, d = '') => typeof v === 'string' ? v : d;
+const num = v => typeof v === 'number' && isFinite(v) ? v : null;
+const arr = v => Array.isArray(v) ? v : [];
+const isData = v => typeof v === 'string' && /^data:[\w.+-]+\/[\w.+-]+(;[\w=.+-]+)*;base64,/.test(v);
+function cleanLesson(l) {
+  if (!l || typeof l !== 'object' || !ID_RE.test(l.id)) return null;
+  const src = SRC[l.src] ? l.src : 'en', lang = LANGS[l.lang] && l.lang !== src ? l.lang : src === 'tr' ? 'en' : 'tr';
+  const out = {
+    id:l.id, title:str(l.title, T('Kurtarılan kayıt')).slice(0, 200), created:num(l.created) || Date.now(), src, lang,
+    segs:arr(l.segs).filter(s => s && typeof s.en === 'string').map(s => ({ en:s.en, tr:typeof s.tr === 'string' ? s.tr : null, t:num(s.t), rec:ID_RE.test(s.rec) ? s.rec : undefined, star:!!s.star })),
+    notes:cleanHTML(l.notes),
+    vocab:arr(l.vocab).filter(v => v && typeof v.w === 'string').map(v => ({ w:v.w, m:str(v.m), ex:str(v.ex), box:Math.min(4, Math.max(0, num(v.box) || 0)), due:num(v.due) || undefined })),
+    recs:arr(l.recs).filter(r => r && ID_RE.test(r.id)).map(r => ({ id:r.id, dur:num(r.dur) || 0, mime:/^[\w.+-]+\/[\w.+-]+$/.test(r.mime) ? r.mime : 'audio/mpeg', name:typeof r.name === 'string' ? r.name.slice(0, 120) : undefined, ext:/^\.\w{1,5}$/.test(r.ext) ? r.ext : undefined }))
+  };
+  if (ID_RE.test(l.folder)) out.folder = l.folder;
+  if (l.kind === 'doc' && l.doc && ['pdf', 'docx'].includes(l.doc.type)) {
+    out.kind = 'doc'; out.doc = { name:str(l.doc.name).slice(0, 200), type:l.doc.type, scale:num(l.doc.scale) || undefined };
+    out.marks = arr(l.marks).filter(m => m && ID_RE.test(m.id)).map(m => ({ id:m.id, p:num(m.p) || 0, s:num(m.s) || 0, e:num(m.e) || 0, r:arr(m.r).filter(x => Array.isArray(x) && x.length === 2 && x.every(n => typeof n === 'number')), t:str(m.t), tr:str(m.tr), c:MKCOL[m.c] ? m.c : 'y' }));
+  }
+  if (l.summary && Array.isArray(l.summary.pts)) out.summary = { pts:l.summary.pts.filter(p => p && typeof p.s === 'string').map(p => ({ s:p.s, en:str(p.en), t:typeof p.t === 'string' ? p.t : null, g:num(p.g) || 0, i:num(p.i) || 0 })), by:l.summary.by === 'chrome' ? 'chrome' : 'local', why:str(l.summary.why), at:num(l.summary.at) || Date.now() };
+  return out;
+}
 async function restoreBackup(file) {
   let j; try { j = JSON.parse(await file.text()); } catch { j = null; }
-  if (!j || j.app !== 'ders-asistani' || !j.db || !j.db.lessons) { toast('Bu dosya bir Lecmic yedeği değil'); return; }
+  if (!j || j.app !== 'ders-asistani' || !j.db || !Array.isArray(j.db.lessons)) { toast('Bu dosya bir Lecmic yedeği değil'); return; }
+  const audio = j.audio && typeof j.audio === 'object' ? j.audio : {};
   let added = 0, had = 0;
-  for (const l of j.db.lessons) {
+  for (const raw of j.db.lessons) {
+    const l = cleanLesson(raw); if (!l) continue;
     if (DB.lessons.some(x => x.id === l.id)) { had++; continue; }
     const keep = [];
-    for (const r of l.recs || []) {
-      const key = l.id + ':' + r.id, du = j.audio && j.audio[key];
-      if (du) { const blob = await (await fetch(du)).blob(); await idbDo('audio', 'readwrite', s => s.put(blob, key)); keep.push(r); }
+    for (const r of l.recs) {
+      const key = l.id + ':' + r.id, du = audio[key];
+      if (isData(du)) { const blob = await (await fetch(du)).blob(); await idbDo('audio', 'readwrite', s => s.put(blob, key)); keep.push(r); }
     }
     l.recs = keep;
     const dk = l.id + ':doc';
-    if (j.audio && j.audio[dk]) { const dblob = await (await fetch(j.audio[dk])).blob(); await idbDo('audio', 'readwrite', s => s.put(dblob, dk)); }
+    if (isData(audio[dk])) { const dblob = await (await fetch(audio[dk])).blob(); await idbDo('audio', 'readwrite', s => s.put(dblob, dk)); }
     DB.lessons.push(l); added++;
   }
-  for (const f of j.db.folders || []) if (!DB.folders.some(x => x.id === f.id)) DB.folders.push(f);
+  for (const f of arr(j.db.folders)) {
+    if (!f || !ID_RE.test(f.id) || DB.folders.some(x => x.id === f.id)) continue;
+    DB.folders.push({ id:f.id, title:str(f.title, T('Adsız ders')).slice(0, 200), created:num(f.created) || Date.now(), open:!!f.open });
+  }
   saveNow(); renderLessons();
   toast(added + ' ders eklendi' + (had ? ', ' + had + ' tanesi zaten vardı' : ''));
 }
+$('saveErrBk').onclick = () => makeBackup(false);
 $('bkLite').onclick = () => { $('exportMenu').hidden = true; makeBackup(false); };
 $('bkFull').onclick = () => { $('exportMenu').hidden = true; makeBackup(true); };
 $('bkRestore').onclick = () => { $('exportMenu').hidden = true; $('bkFile').click(); };

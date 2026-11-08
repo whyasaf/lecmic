@@ -132,7 +132,7 @@ $('impGo').onclick = async () => {
   impWorker.onmessage = e => {
     const m = e.data;
     if (m.type === 'dl') $('impMsg').textContent = 'Model indiriliyor (sadece ilk seferde): %' + Math.round(m.pct || 0);
-    else if (m.type === 'dev') { $('impMsg').textContent = 'Yazıya dökülüyor...' + (m.dev === 'webgpu' ? '' : ' (ekran kartı kullanılamadı, yavaş modda)'); $('impProg').max = 1; $('impProg').value = 0; }
+    else if (m.type === 'dev') { $('impMsg').textContent = 'Yazıya dökülüyor...' + (m.dev === 'webgpu' ? '' : IS_MOBILE ? ' (telefonda çalışıyor, biraz sürebilir)' : ' (ekran kartı kullanılamadı, yavaş modda)'); $('impProg').max = 1; $('impProg').value = 0; }
     else if (m.type === 'part') {
       for (const c of m.chunks) {
         const text = (c.text || '').trim();

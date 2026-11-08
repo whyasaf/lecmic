@@ -26,12 +26,7 @@
   a { display:inline-block; padding:10px 20px; border-radius:10px; background:var(--accent); color:#fff; font-weight:600; text-decoration:none; }
   a:hover { filter:brightness(1.08); }
 </style>
-<script>
-  // uygulamada seçilen temayı ve dili kullan
-  try {
-    const t = localStorage.getItem('ders-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
-  } catch {}
-</script>
+<script src="/js/404.js"></script>
 </head>
 <body>
 <main>
@@ -41,13 +36,5 @@
   <p id="p">Aradığın sayfa yok ya da taşınmış.</p>
   <a href="/" id="a">Lecmic'e dön</a>
 </main>
-<script>
-  try {
-    if (localStorage.getItem('ders-ui') === 'en') {
-      document.documentElement.lang = 'en'; document.title = 'Page not found · Lecmic';
-      h.textContent = 'Page not found'; p.textContent = 'This page does not exist or has moved.'; a.textContent = 'Back to Lecmic';
-    }
-  } catch {}
-</script>
 </body>
 </html>

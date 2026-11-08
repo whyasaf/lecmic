@@ -1,11 +1,14 @@
 // kelime defteri
+// kartlarda ne kadar öğrenildiği: 4 nokta
+const vLevel = v => '<span class="vlv" title="' + T('Öğrenme: ') + (v.box || 0) + '/4">' + [1, 2, 3, 4].map(n => '<i' + ((v.box || 0) >= n ? ' class="on"' : '') + '></i>').join('') + '</span>';
 function renderVocab() {
   const l = L();
   $('vCount').textContent = l.vocab.length || '';
   $('vocabList').innerHTML = l.vocab.length ? l.vocab.map((v, i) =>
-    '<div class="vrow"><div><div class="vw">' + esc(v.w) + '</div><div class="vm" dir="' + (l.lang === 'ur' ? 'rtl' : 'ltr') + '">' + esc(v.m) + '</div>'
+    '<div class="vrow"><div><div class="vw">' + esc(v.w) + vLevel(v) + '</div><div class="vm" dir="' + (l.lang === 'ur' ? 'rtl' : 'ltr') + '">' + esc(v.m) + '</div>'
     + (v.ex ? '<div class="vx">' + esc(v.ex) + '</div>' : '') + '</div><button class="icon sm" data-vdel="' + i + '" title="Sil">' + IC.trash + '</button></div>'
   ).join('') : '<div class="empty">Henüz kelime yok. Soldaki metinde bir kelimeye tıkla, "Defterime ekle" de. Ya da yukarıdan kendin yaz.</div>';
+  if (typeof renderVocabBar === 'function') renderVocabBar();
 }
 $('vocabList').addEventListener('click', e => {
   const b = e.target.closest('[data-vdel]'); if (!b) return;
@@ -196,6 +199,16 @@ function refreshState() {
 }
 document.addEventListener('selectionchange', () => { if (notes.contains(getSelection().anchorNode)) refreshState(); });
 document.addEventListener('mousedown', e => { if (!e.target.closest('.tmore-w')) $('toolsMore').hidden = true; });
+// yapıştırılan içerik temizlenir. resim ve dosya notlara girmez, bir resim bile megabaytlarca yer tutuyor
+notes.addEventListener('paste', e => {
+  const cd = e.clipboardData; if (!cd) return;
+  const html = cd.getData('text/html'), text = cd.getData('text/plain');
+  e.preventDefault();
+  if (!html && !text) { if ([...cd.items].some(i => i.kind === 'file')) toast('Notlara resim ya da dosya eklenemez'); return; }
+  document.execCommand('insertHTML', false, html ? cleanHTML(html) : esc(text).replace(/\n/g, '<br>'));
+  onNotesChange();
+});
+notes.addEventListener('drop', e => { if (e.dataTransfer && e.dataTransfer.files.length) { e.preventDefault(); toast('Notlara resim ya da dosya eklenemez'); } });
 // yazarken araç çubuğu geri çekilir, fareyle üstüne gelince netleşir
 notes.addEventListener('input', () => tools.classList.add('quiet'));
 notes.addEventListener('blur', () => tools.classList.remove('quiet'));

@@ -143,8 +143,8 @@ segOn($('ratePick'), v => { $('pRate').value = v; $('pRate').onchange(); });
 // ---- veri
 const fmtSize = b => b < 1048576 ? Math.max(1, Math.round(b / 1024)) + ' KB' : (b / 1048576).toFixed(b < 10485760 ? 1 : 0) + ' MB';
 async function renderData() {
-  // yazılar localStorage'da, ses ve belgeler IndexedDB'de
-  const text = new Blob([lsGet('ders-v2', '')]).size;
+  // yazılar (dersler, notlar), ses ve belgeler; hepsi IndexedDB'de
+  const text = new Blob([JSON.stringify(DB)]).size;
   let audio = 0, docs = 0;
   try {
     const all = await idbDo('audio', 'readonly', s => s.getAll()), keys = await idbDo('audio', 'readonly', s => s.getAllKeys());
@@ -177,6 +177,8 @@ $('wipeBtn').onclick = async () => {
   if (w === null) return;
   if (!['SİL', 'SIL', 'DELETE'].includes(w.trim().toLocaleUpperCase('tr'))) { toast(T('Silinmedi')); return; }
   await idbDo('audio', 'readwrite', s => s.clear()); await idbDo('chunks', 'readwrite', s => s.clear());
+  await idbDo('lessons', 'readwrite', s => s.clear()); await idbDo('meta', 'readwrite', s => s.clear());
+  DB = null;
   Object.keys(localStorage).filter(k => k.startsWith('ders-') && k !== 'ders-ui' && k !== 'ders-theme').forEach(k => localStorage.removeItem(k));
   removeEventListener('pagehide', saveNow);
   location.replace(location.pathname);
@@ -253,7 +255,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-lega
 addEventListener('hashchange', () => { const m = location.hash.match(/^#gizlilik\/?(\w*)/); if (m) openLegal(m[1]); });
 
 // adres #ayarlar ya da #gizlilik ile açıldıysa (dersler yüklendikten sonra)
-setTimeout(() => {
+DBReady.then(() => {
   const m = location.hash.match(/^#ayarlar\/?(\w*)/), g = location.hash.match(/^#gizlilik\/?(\w*)/);
   if (m) openSettings(m[1] || undefined); else if (g) openLegal(g[1]);
 });
@@ -271,18 +273,18 @@ $('tourNext').onclick = () => { if (tourStep < 2) { tourStep++; showTourStep(); 
 $('tourSkip').onclick = () => { if (tourStep) { tourStep--; showTourStep(); } else $('tourDlg').close(); };
 $('tourDlg').addEventListener('close', () => lsSet('ders-tour', '1'));
 $('tourAgain').onclick = () => { closeSettings(); openTour(); };
-setTimeout(() => {
+DBReady.then(() => setTimeout(() => {
   if (lsGet('ders-tour', '') || location.hash || DB.lessons.some(l => l.segs.length || l.notes || l.recs.length || l.doc)) return;
   openTour();
-}, 1100);
+}, 1100));
 
 // haftada bir yedek hatırlatması. ilk kullanımdan bir hafta geçmeden ya da üç gün içinde tekrar sormaz
 if (!lsGet('ders-since', '')) lsSet('ders-since', Date.now());
-setTimeout(() => {
+DBReady.then(() => setTimeout(() => {
   if (lsGet('ders-bkremind', '1') !== '1') return;
   const used = DB.lessons.some(l => l.segs.length || l.notes || l.recs.length || l.doc);
   const now = Date.now(), WEEK = 7 * 864e5, base = Math.max(+lsGet('ders-lastbk', '0'), +lsGet('ders-since', now));
   if (!used || now - base < WEEK || now - +lsGet('ders-bknag', '0') < 3 * 864e5) return;
   lsSet('ders-bknag', now);
   toast(T('Bir haftadır yedek almadın.'), { label:T('Yedekle'), fn:() => openSettings('veri') });
-}, 5000);
+}, 5000));

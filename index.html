@@ -31,12 +31,7 @@
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="css/app.css">
-<script>
-  // açılış ekranı ilk anda doğru temada çıksın
-  try { const t = localStorage.getItem('ders-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}
-  // bir hata yüzünden açılış ekranı ekranda takılı kalmasın
-  addEventListener('load', () => setTimeout(() => { const s = document.getElementById('splash'); if (s) s.classList.add('done'); }, 3000));
-</script>
+<script src="js/boot.js"></script>
 </head>
 <body>
 <div id="splash" aria-hidden="true">
@@ -44,6 +39,12 @@
   <div class="sp-name">Lecmic</div>
   <div class="sp-bar"><i></i></div>
   <div class="sp-by">© whyasaf</div>
+</div>
+<div id="saveErr" role="alert" hidden>
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.2v.1"/></svg>
+  <span><b>Değişiklikler kaydedilemiyor</b> Cihazda yer kalmamış olabilir. Kaybetmemek için hemen yedek al.</span>
+  <button class="btn sm" id="saveErrBk">Hemen yedek al</button>
+  <button class="btn sm" data-open-set="veri">Ayrıntı</button>
 </div>
 <div id="app" data-mtab="trans">
   <aside id="side">
@@ -206,6 +207,7 @@
             <input type="text" id="vInput" placeholder="Kelime ekle (İngilizce)" autocomplete="off">
             <button class="btn primary sm" type="submit">Ekle</button>
           </form>
+          <div class="vbar" id="vBar" hidden><span id="vDue"></span><button class="btn sm" id="vStudy"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3.5" width="13" height="16" rx="3"/><path d="M4 7.5v10A3 3 0 0 0 7 20.5h8"/><path d="M10.5 9h6M10.5 12.5h4" opacity=".75"/></svg>Çalış</button></div>
           <div id="vocabList"></div>
         </div>
         <div class="pane" id="paneSum" hidden>
@@ -492,7 +494,8 @@
 <li><b>Google Çeviri:</b> Çevrilecek metin ve kelimeler. Chrome'un kendi çevirmeninin desteklediği dillerde çeviri cihazda yapılır, metin bir yere gitmez.</li>
 <li><b>MyMemory:</b> Google cevap vermezse çevrilecek metin.</li>
 <li><b>Hugging Face:</b> Ses dosyasından transkript için yapay zekâ modeli ilk kullanımda buradan indirilir. Sesin gönderilmez.</li>
-<li><b>Vercel, cdnjs, jsDelivr:</b> Uygulamanın kendisi ve kullandığı kütüphaneler buralardan yüklenir. Bu hizmetler, her web sitesinde olduğu gibi IP adresini ve tarayıcı bilgisini görür.</li></ul>
+<li><b>Vercel:</b> Uygulama buradan yüklenir. Her web sitesinde olduğu gibi IP adresini ve tarayıcı bilgisini görür. PDF ve Word okuma kütüphaneleri de uygulamanın kendi içindedir.</li>
+<li><b>jsDelivr:</b> Sadece ses dosyasından transkript kullanılırken yazıya dökme kütüphanesi buradan yüklenir, IP adresini görür.</li></ul>
 <h2>Sana ait olanlar</h2><p>Aldığın yedek dosyaları senin bilgisayarına iner. Onları nerede sakladığın ve kimle paylaştığın senin kontrolündedir. Yedeklerin ders içeriklerini içerdiğini unutma.</p>
 <h2>Verilerini silmek</h2><p>Ayarlar → Veri → Tüm verileri sil ile her şeyi bu cihazdan silebilirsin. Tarayıcının site verilerini silmek de aynı sonucu verir.</p>
 <h2>Bize yazdığında</h2><p>Destek için gönderdiğin e-postalar KVKK Aydınlatma Metni'nde anlatıldığı gibi işlenir.</p>
@@ -504,7 +507,8 @@
 <li><b>Google Translate:</b> Text and words to translate. For languages that Chrome's own translator supports, translation happens on your device and the text goes nowhere.</li>
 <li><b>MyMemory:</b> Text to translate, if Google does not answer.</li>
 <li><b>Hugging Face:</b> The AI model for transcribing audio files is downloaded from here on first use. Your audio is not sent.</li>
-<li><b>Vercel, cdnjs, jsDelivr:</b> The app itself and the libraries it uses load from here. As on any website, these services see your IP address and browser info.</li></ul>
+<li><b>Vercel:</b> The app loads from here. As on any website, it sees your IP address and browser info. The PDF and Word libraries are part of the app itself.</li>
+<li><b>jsDelivr:</b> Only when you transcribe an audio file, the transcription library loads from here and sees your IP address.</li></ul>
 <h2>What belongs to you</h2><p>Backup files download to your computer. Where you keep them and who you share them with is up to you. Remember that backups contain your lesson content.</p>
 <h2>Deleting your data</h2><p>Settings → Data → Delete all data removes everything from this device. Clearing the site data in your browser does the same.</p>
 <h2>When you write to us</h2><p>Support emails are handled as described in the KVKK notice.</p>
@@ -554,7 +558,30 @@
   </div>
 </dialog>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
+<dialog id="cardDlg" class="cards" aria-labelledby="cdTitle" tabindex="-1">
+  <header class="cd-head">
+    <b id="cdTitle">Kelime kartları</b>
+    <span class="segc" id="cdScope"><button data-v="lesson">Bu ders</button><button data-v="all">Tüm dersler</button><i class="segi"></i></span>
+    <button class="icon" id="cdClose" title="Kapat"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </header>
+  <div class="cd-prog"><i id="cdBar"></i><span id="cdNum"></span></div>
+  <div class="cd-stage">
+    <div class="card3d" id="cdCard">
+      <div class="cf front"><small class="cd-src" id="cdSrc"></small><b class="cd-w" id="cdWord"></b><span class="cd-hint">Anlamını hatırla, sonra kartı çevir</span></div>
+      <div class="cf back"><small class="cd-src" id="cdSrc2"></small><b class="cd-w sm" id="cdWord2"></b><p class="cd-m" id="cdMean"></p><p class="cd-ex" id="cdEx"></p></div>
+    </div>
+    <div class="cd-end" id="cdEnd" hidden><span class="cd-mark"></span><b id="cdEndT"></b><p id="cdEndP"></p></div>
+  </div>
+  <footer class="cd-foot">
+    <button class="btn primary big" id="cdFlip">Kartı çevir</button>
+    <div class="cd-ans" id="cdAns" hidden><button class="btn big cd-again" id="cdAgain">Tekrar</button><button class="btn primary big" id="cdKnow">Biliyorum</button></div>
+    <div class="cd-ans" id="cdEndB" hidden><button class="btn big" id="cdDone">Bitir</button><button class="btn primary big" id="cdMore">Bir tur daha</button></div>
+    <small class="cd-keys" id="cdKeys">Boşluk: çevir · 1: tekrar · 2: biliyorum</small>
+  </footer>
+</dialog>
+
+<script src="vendor/purify.min.js"></script>
+<script src="vendor/lame.min.js"></script>
 <script src="js/core.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/translate.js"></script>
@@ -566,6 +593,7 @@
 <script src="js/summary.js"></script>
 <script src="js/doc.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/cards.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

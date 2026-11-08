@@ -132,7 +132,14 @@ async function startRec() {
   if (L().kind === 'doc') { toast('Belge dersinde kayıt yok, yeni bir ders aç'); return; }
   if (!SR) { toast('Bu tarayıcı canlı konuşma tanımayı desteklemiyor. Chrome kullan.'); return; }
   if (!navigator.mediaDevices) { toast('Mikrofon sadece localhost veya https adreslerinde çalışır.'); return; }
-  starting = true; setStatus('Mikrofon isteniyor... (Chrome izin sorarsa İzin ver)');
+  starting = true;
+  // ilk kayıttan önce bir kez: izin ve sesin nereye gittiği
+  if (!lsGet('ders-recok', '')) {
+    const ok = await ask(T('Kayda başlamadan önce'), { sub:T('Ders kaydı için hocandan ya da konuşan kişiden izin al.') + '\n' + T('Canlı transkript için ses, Chrome üzerinden Google\'a gider. Ses kaydının kendisi sadece bu cihazda kalır.'), ok:T('Anladım, başla'), cancel:true });
+    if (!ok) { starting = false; return; }
+    lsSet('ders-recok', '1');
+  }
+  setStatus('Mikrofon isteniyor... (Chrome izin sorarsa İzin ver)');
   try { await startRecInner(); }
   catch (e) { console.error(e); toast('Kayıt başlamadı: ' + (e.name || '') + ' ' + (e.message || '')); R.state = 'idle'; uiRec(); }
   finally { starting = false; if (R.state === 'idle') setStatus(''); }
@@ -279,7 +286,7 @@ function refreshPlayer() {
   const l = L(), bar = $('playerBar');
   if (!l.recs.length) { bar.hidden = true; player.pause(); player.removeAttribute('src'); curRec = null; return; }
   bar.hidden = false;
-  $('recSel').innerHTML = l.recs.map((r, i) => '<option value="' + r.id + '">' + esc(r.name || 'Kayıt ' + (i + 1)) + ' (' + fmt(r.dur) + ')</option>').join('');
+  $('recSel').innerHTML = l.recs.map((r, i) => '<option value="' + esc(r.id) + '">' + esc(r.name || 'Kayıt ' + (i + 1)) + ' (' + fmt(r.dur) + ')</option>').join('');
   if (curRec) $('recSel').value = curRec.id;
   if (!curRec || !l.recs.includes(curRec)) { curRec = null; loadRec(l.recs[l.recs.length - 1]); }
 }
