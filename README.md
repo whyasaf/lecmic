@@ -7,7 +7,7 @@
 <p align="center"><b>Ders kaydı, canlı çeviri, notlar. Hepsi tek yerde.</b><br>
 İngilizce dersi dinlerken Türkçesini anında oku.</p>
 
-<p align="center"><a href="https://lecmic.whyasaf.com"><b>lecmic.whyasaf.com</b></a> · Beta 0.9 · <a href="#english">English</a></p>
+<p align="center"><a href="https://lecmic.whyasaf.com"><b>lecmic.whyasaf.com</b></a> · Beta 0.9.1 · <a href="#english">English</a></p>
 
 ![Canlı transkript ve çeviri](docs/ekran-1.jpg)
 
@@ -90,6 +90,20 @@ Kararların nedenleri ve bedelleri [docs/adr](docs/adr) altında:
 5. [Çeviride yedek zincir](docs/adr/0005-ceviri-zinciri.md)
 6. [Kütüphaneler repoda, CSP ve HTML temizleme](docs/adr/0006-guvenlik.md)
 
+## Testler
+
+Testler uygulamadan ayrı, kendi klasöründe (`tests/`) durur. Uygulamanın kendisi derleme adımı olmadan çalışır; bu klasör yayına gitmez.
+
+```
+cd tests
+npm install
+npm test        # birim testleri (Vitest + jsdom)
+npm run e2e     # tarayıcıda smoke testi (Playwright, bilgisayardaki Chrome)
+```
+
+- **Birim testleri:** Yedekten geri yükleme temizliği (`js/sanitize.js`): HTML içeren kimlikler, notlarda `<script>` ve olay öznitelikleri, `https:` ya da `javascript:` ses adresleri, bozuk dil kodları ve alan türleri. Bir de kelimenin cümledeki anlamı, Google'ın gerçek bir cevabıyla. Testler uygulamanın kendi dosyalarını değiştirmeden yükler.
+- **Smoke testi:** Ders oluştur, not yaz, beklemeden yenile; ders ve not yerinde mi. `vercel.json`'daki başlıklarla (CSP dahil) çalışan küçük bir sunucuya karşı koşar, sayfada hata ya da CSP ihlali olmamalı.
+
 ## Dosyalar
 
 ```
@@ -98,6 +112,7 @@ index.html            sayfa
 css/app.css           görünüm ve animasyonlar
 js/core.js            yardımcılar, ders verisi, ses deposu
 js/i18n.js            arayüz dili
+js/sanitize.js        dışarıdan gelen HTML'i ve yedek dosyasını temizleme (saf fonksiyonlar, testli)
 js/translate.js       çeviri, kelimenin cümledeki anlamı
 js/transcript.js      transkript, paneller, kelime kutusu
 js/notes.js           not editörü, kelime defteri, sekmeler, çeviri sekmesi
@@ -114,6 +129,7 @@ manifest.webmanifest  uygulama olarak kurma
 vercel.json           yayın ayarları ve güvenlik başlıkları (CSP)
 vendor/               kütüphaneler (bkz. vendor/README.md)
 docs/adr/             mimari karar kayıtları
+tests/                birim ve smoke testleri (yayına gitmez)
 ```
 
 ## Kullanılan kütüphaneler

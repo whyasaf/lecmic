@@ -254,53 +254,21 @@ async function makeBackup(withAudio) {
   setStatus(''); toast('Yedek indirildi');
   if ($('setDlg').open && setSec === 'veri') renderData();
 }
-// yedekten gelen veri olduğu gibi alınmaz. başkasının paylaştığı bir yedek de olabilir:
-// kimlikler, dil kodları ve alan türleri kontrol edilir, notlar temizlenir, ses sadece dosyanın içinden (data:) alınır
-const ID_RE = /^[a-z0-9]{1,40}$/i;
-const str = (v, d = '') => typeof v === 'string' ? v : d;
-const num = v => typeof v === 'number' && isFinite(v) ? v : null;
-const arr = v => Array.isArray(v) ? v : [];
-const isData = v => typeof v === 'string' && /^data:[\w.+-]+\/[\w.+-]+(;[\w=.+-]+)*;base64,/.test(v);
-function cleanLesson(l) {
-  if (!l || typeof l !== 'object' || !ID_RE.test(l.id)) return null;
-  const src = SRC[l.src] ? l.src : 'en', lang = LANGS[l.lang] && l.lang !== src ? l.lang : src === 'tr' ? 'en' : 'tr';
-  const out = {
-    id:l.id, title:str(l.title, T('Kurtarılan kayıt')).slice(0, 200), created:num(l.created) || Date.now(), src, lang,
-    segs:arr(l.segs).filter(s => s && typeof s.en === 'string').map(s => ({ en:s.en, tr:typeof s.tr === 'string' ? s.tr : null, t:num(s.t), rec:ID_RE.test(s.rec) ? s.rec : undefined, star:!!s.star })),
-    notes:cleanHTML(l.notes),
-    vocab:arr(l.vocab).filter(v => v && typeof v.w === 'string').map(v => ({ w:v.w, m:str(v.m), ex:str(v.ex), box:Math.min(4, Math.max(0, num(v.box) || 0)), due:num(v.due) || undefined })),
-    recs:arr(l.recs).filter(r => r && ID_RE.test(r.id)).map(r => ({ id:r.id, dur:num(r.dur) || 0, mime:/^[\w.+-]+\/[\w.+-]+$/.test(r.mime) ? r.mime : 'audio/mpeg', name:typeof r.name === 'string' ? r.name.slice(0, 120) : undefined, ext:/^\.\w{1,5}$/.test(r.ext) ? r.ext : undefined }))
-  };
-  if (ID_RE.test(l.folder)) out.folder = l.folder;
-  if (l.kind === 'doc' && l.doc && ['pdf', 'docx'].includes(l.doc.type)) {
-    out.kind = 'doc'; out.doc = { name:str(l.doc.name).slice(0, 200), type:l.doc.type, scale:num(l.doc.scale) || undefined };
-    out.marks = arr(l.marks).filter(m => m && ID_RE.test(m.id)).map(m => ({ id:m.id, p:num(m.p) || 0, s:num(m.s) || 0, e:num(m.e) || 0, r:arr(m.r).filter(x => Array.isArray(x) && x.length === 2 && x.every(n => typeof n === 'number')), t:str(m.t), tr:str(m.tr), c:MKCOL[m.c] ? m.c : 'y' }));
-  }
-  if (l.summary && Array.isArray(l.summary.pts)) out.summary = { pts:l.summary.pts.filter(p => p && typeof p.s === 'string').map(p => ({ s:p.s, en:str(p.en), t:typeof p.t === 'string' ? p.t : null, g:num(p.g) || 0, i:num(p.i) || 0 })), by:l.summary.by === 'chrome' ? 'chrome' : 'local', why:str(l.summary.why), at:num(l.summary.at) || Date.now() };
-  return out;
-}
+// yedek dosyası js/sanitize.js'deki cleanBackup'tan geçer, burada sadece IndexedDB'ye yazılır
 async function restoreBackup(file) {
   let j; try { j = JSON.parse(await file.text()); } catch { j = null; }
-  if (!j || j.app !== 'ders-asistani' || !j.db || !Array.isArray(j.db.lessons)) { toast('Bu dosya bir Lecmic yedeği değil'); return; }
-  const audio = j.audio && typeof j.audio === 'object' ? j.audio : {};
+  const bk = cleanBackup(j);
+  if (!bk) { toast('Bu dosya bir Lecmic yedeği değil'); return; }
   let added = 0, had = 0;
-  for (const raw of j.db.lessons) {
-    const l = cleanLesson(raw); if (!l) continue;
+  for (const l of bk.lessons) {
     if (DB.lessons.some(x => x.id === l.id)) { had++; continue; }
-    const keep = [];
-    for (const r of l.recs) {
-      const key = l.id + ':' + r.id, du = audio[key];
-      if (isData(du)) { const blob = await (await fetch(du)).blob(); await idbDo('audio', 'readwrite', s => s.put(blob, key)); keep.push(r); }
+    for (const [key, du] of Object.entries(bk.audio)) {
+      if (!key.startsWith(l.id + ':')) continue;
+      const blob = await (await fetch(du)).blob(); await idbDo('audio', 'readwrite', s => s.put(blob, key));
     }
-    l.recs = keep;
-    const dk = l.id + ':doc';
-    if (isData(audio[dk])) { const dblob = await (await fetch(audio[dk])).blob(); await idbDo('audio', 'readwrite', s => s.put(dblob, dk)); }
     DB.lessons.push(l); added++;
   }
-  for (const f of arr(j.db.folders)) {
-    if (!f || !ID_RE.test(f.id) || DB.folders.some(x => x.id === f.id)) continue;
-    DB.folders.push({ id:f.id, title:str(f.title, T('Adsız ders')).slice(0, 200), created:num(f.created) || Date.now(), open:!!f.open });
-  }
+  for (const f of bk.folders) if (!DB.folders.some(x => x.id === f.id)) DB.folders.push(f);
   saveNow(); renderLessons();
   toast(added + ' ders eklendi' + (had ? ', ' + had + ' tanesi zaten vardı' : ''));
 }

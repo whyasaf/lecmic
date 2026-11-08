@@ -17,6 +17,10 @@ sessizce duruyordu.
   önemli anlarda ve sayfa gizlenirken çağrılır, böylece işaretlenmesi unutulmuş bir değişiklik de kaybolmaz.
 - Sekme kapanırken başlayan IndexedDB yazması bitmeyebilir. Bu yüzden `pagehide`'ın yanında `visibilitychange`
   (sayfa gizlenince) da kaydeder; bu olay daha erken gelir ve telefonda daha güvenilirdir.
+- Bu da yetmedi: smoke testi, not yazıp hemen yenileyince notun kaybolduğunu gösterdi (yenilemede yazma yarıda
+  kesiliyor). Çözüm: sayfa kapanırken ya da gizlenirken, o an değişmiş dersler eşzamanlı olarak `localStorage`'a
+  (`ders-pending`) da yazılır. IndexedDB yazması bitince silinir; bitmezse sonraki açılışta `loadDB` bunu alıp
+  IndexedDB'ye aktarır. Normal kayıtlarda `localStorage`'a dokunulmaz, 5 MB sınırı geri gelmez.
 - Yazma başarısız olursa o dersler yeniden işaretlenir, bir sonraki kayıtta tekrar denenir.
 - Eski sürümün `localStorage` verisi ilk açılışta otomatik taşınır. Eski kopya ancak taşıma başarıyla yazılınca
   silinir.

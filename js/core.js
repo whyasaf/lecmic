@@ -60,20 +60,7 @@ function toast(msg, act) {
   $('toast').appendChild(d);
   setTimeout(() => { d.classList.add('out'); setTimeout(() => d.remove(), 220); }, act ? 9000 : 3400);
 }
-const VERSION = 'Beta 0.9';
-// dışarıdan gelen HTML (notlar, yapıştırılan içerik, Word belgesi, yedek) temizlenir:
-// betik, olay özniteliği, javascript: bağlantısı kalmaz. notlarda resim de olmaz, yer kaplamasın
-const NOTE_TAGS = ['p', 'div', 'br', 'span', 'b', 'strong', 'i', 'em', 'u', 's', 'strike', 'sub', 'sup', 'mark', 'font', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'hr', 'input', 'a', 'code', 'pre'];
-function cleanHTML(html, doc) {
-  html = String(html || '');
-  if (!window.DOMPurify) return esc(new DOMParser().parseFromString(html, 'text/html').body.textContent || '');
-  if (doc) return DOMPurify.sanitize(html, { FORBID_TAGS:['style', 'form', 'input', 'button', 'textarea', 'select', 'iframe'] });
-  const frag = DOMPurify.sanitize(html, { ALLOWED_TAGS:NOTE_TAGS, ALLOWED_ATTR:['style', 'type', 'checked', 'href', 'dir', 'color'], RETURN_DOM_FRAGMENT:true });
-  // notlardaki tek giriş kutusu yapılacaklar kutusu
-  frag.querySelectorAll('input').forEach(x => { if (x.type !== 'checkbox') x.remove(); });
-  frag.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
-  const d = document.createElement('div'); d.append(frag); return d.innerHTML;
-}
+const VERSION = 'Beta 0.9.1';
 // kısayolların tuşu: Mac'te ⌘, Windows'ta Ctrl (ikisi de çalışır)
 const MOD = IS_MAC ? '⌘' : 'Ctrl';
 if (IS_MAC) {
@@ -125,8 +112,27 @@ function newLesson(word) {
 }
 // dersler IndexedDB'de, her ders ayrı kayıt. eski sürümler hepsini tek parça localStorage'a yazıyordu (5 MB sınırı),
 // ilk açılışta oradan taşınır. eski kopya ancak taşıma başarıyla yazılınca silinir
-let legacyLS = false;
+let legacyLS = false, pendingLS = false;
 async function loadDB() {
+  const d = await loadStored();
+  // sekme kapanırken IndexedDB'ye yazılamamış son değişiklikler varsa onlar daha yeni (bkz. saveNow)
+  let pend = null;
+  try { pend = JSON.parse(localStorage.getItem('ders-pending') || 'null'); } catch {}
+  if (pend && Array.isArray(pend.lessons)) {
+    for (const pl of pend.lessons) {
+      if (!pl || typeof pl.id !== 'string') continue;
+      const i = d.lessons.findIndex(x => x.id === pl.id);
+      if (i >= 0) d.lessons[i] = pl; else d.lessons.push(pl);
+    }
+    const gone = Array.isArray(pend.gone) ? pend.gone : [];
+    if (gone.length && d.lessons.some(l => !gone.includes(l.id))) d.lessons = d.lessons.filter(l => !gone.includes(l.id));
+    if (pend.meta) { if (Array.isArray(pend.meta.folders)) d.folders = pend.meta.folders; d.cur = pend.meta.cur; }
+    if (!d.lessons.some(l => l.id === d.cur)) d.cur = d.lessons.reduce((a, b) => (b.created > a.created ? b : a)).id;
+    pendingLS = true;
+  }
+  return d;
+}
+async function loadStored() {
   const db = await idb;
   if (db) {
     const lessons = await idbDo('lessons', 'readonly', s => s.getAll()), meta = await idbDo('meta', 'readonly', s => s.get('db'));
@@ -155,7 +161,7 @@ const L = () => DB.lessons.find(l => l.id === DB.cur);
 // taşıma gibi önemli anlarda ve sayfa gizlenirken çağrılır, bir işaret kaçırılsa bile değişiklik orada yakalanır
 let saveT, IDB = null, saveErr = false;
 const written = new Map(), dirty = new Set();
-function saveNow(full = true) {
+function saveNow(full = true, hiding = false) {
   clearTimeout(saveT);
   if (!DB) return;
   // IndexedDB yoksa (çok eski tarayıcı) eskisi gibi localStorage, ama hata artık yutulmuyor
@@ -166,7 +172,12 @@ function saveNow(full = true) {
   for (const l of check) { const j = JSON.stringify(l); if (written.get(l.id) !== j) changed.push([l, j]); }
   const gone = full === false ? [] : [...written.keys()].filter(k => k !== '#meta' && !ids.has(k));
   const meta = JSON.stringify({ cur:DB.cur, folders:DB.folders });
-  if (!changed.length && !gone.length && written.get('#meta') === meta && !legacyLS) return;
+  if (!changed.length && !gone.length && written.get('#meta') === meta && !legacyLS && !pendingLS) return;
+  // sayfa kapanıyor ya da gizleniyor: aşağıdaki asenkron yazma bitmeden sayfa ölebilir. aynı değişiklikler
+  // eşzamanlı localStorage'a da yazılır, sonraki açılışta loadDB onları alır. yazma bitince silinir
+  if (hiding && (changed.length || gone.length)) {
+    try { localStorage.setItem('ders-pending', '{"lessons":[' + changed.map(c => c[1]).join(',') + '],"gone":' + JSON.stringify(gone) + ',"meta":' + meta + '}'); } catch {}
+  }
   // yazma başarısız olursa bu dersler bir sonraki kayıtta yeniden denensin
   const retry = e => { changed.forEach(([l]) => dirty.add(l.id)); saveFail(e); };
   try {
@@ -177,6 +188,7 @@ function saveNow(full = true) {
     tx.oncomplete = () => {
       changed.forEach(([l, j]) => written.set(l.id, j)); gone.forEach(k => written.delete(k)); written.set('#meta', meta);
       if (legacyLS) { legacyLS = false; try { localStorage.removeItem('ders-v2'); } catch {} }
+      if (hiding || pendingLS) { pendingLS = false; try { localStorage.removeItem('ders-pending'); } catch {} }
       saveOk();
     };
     tx.onerror = tx.onabort = () => retry(tx.error);
@@ -185,8 +197,8 @@ function saveNow(full = true) {
 const save = id => { if (DB) dirty.add(id || DB.cur); clearTimeout(saveT); saveT = setTimeout(() => saveNow(false), 300); };
 // sekme kapanırken başlayan yazma bitmeyebilir. sayfa gizlenince (sekme değişti, telefonda uygulamadan çıkıldı)
 // daha erken ve daha güvenilir bir fırsat var
-addEventListener('pagehide', () => saveNow());
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
+addEventListener('pagehide', () => saveNow(true, true));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(true, true); });
 // kayıt başarısızsa kapanmayan kırmızı uyarı. sessizce veri kaybetmek yerine kullanıcı yedek alabilsin
 function saveFail(e) {
   console.error('kaydedilemedi', e);

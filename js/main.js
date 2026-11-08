@@ -20,7 +20,7 @@ addEventListener('keydown', e => {
 applyTheme(); applyFs();
 (async () => {
   DB = await loadDB();
-  if (legacyLS) saveNow();
+  if (legacyLS || pendingLS) saveNow();
   setSide(innerWidth > 760 && lsGet('ders-side', '1') === '1');
   { const v = parseFloat(lsGet('ders-sv', '')), h = parseFloat(lsGet('ders-sh', '')); if (v) applyV(v); if (h) applyH(h); }
   renderAll();

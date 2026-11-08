@@ -192,6 +192,8 @@ function deviceInfo() {
   return VERSION + ' · ' + br + ' · ' + os + app + ' · ' + innerWidth + '×' + innerHeight + ' · ' + T('çeviri') + ': ' + (translator ? 'Chrome' : 'Google');
 }
 let repType = 'hata';
+// destekteki sürüm yazısı tek yerden (VERSION) gelir
+document.querySelector('.about .ver').textContent = 'Sürüm ' + VERSION;
 function renderSupport() { segSet($('repType'), repType); $('repDevTxt').textContent = deviceInfo(); setKeyOs(IS_MAC ? 'mac' : 'win'); }
 // kısayol tablosu: Windows ya da Mac tuşları. her açılışta kendi sistemine döner
 function setKeyOs(os) {
@@ -260,15 +262,24 @@ DBReady.then(() => {
 });
 
 // ilk açılışta 3 adımlık kısa rehber. içinde ders olan eski kullanıcılara çıkmaz
+// son adım kayıt izni: onaylanmadan "Başla" açılmaz. onaylayana ilk kayıtta tekrar sorulmaz,
+// rehberi atlayana ise ilk kayıtta sorulur (record.js)
 let tourStep = 0;
+const TOUR_LAST = $('tourDlg').querySelectorAll('section').length - 1;
 function showTourStep() {
   $('tourDlg').querySelectorAll('section').forEach(x => { x.hidden = +x.dataset.step !== tourStep; });
   $('tourDlg').querySelectorAll('.tr-dots i').forEach((x, i) => x.classList.toggle('on', i === tourStep));
-  $('tourNext').textContent = T(tourStep === 2 ? 'Başla' : 'Devam');
+  $('tourNext').textContent = T(tourStep === TOUR_LAST ? 'Başla' : 'Devam');
+  $('tourNext').disabled = tourStep === TOUR_LAST && !$('tourOk').checked;
   $('tourSkip').textContent = T(tourStep ? 'Önceki' : 'Atla');
 }
-function openTour() { tourStep = 0; showTourStep(); $('tourDlg').showModal(); $('tourDlg').focus(); }
-$('tourNext').onclick = () => { if (tourStep < 2) { tourStep++; showTourStep(); } else $('tourDlg').close(); };
+function openTour() { tourStep = 0; $('tourOk').checked = !!lsGet('ders-recok', ''); showTourStep(); $('tourDlg').showModal(); $('tourDlg').focus(); }
+$('tourOk').onchange = showTourStep;
+$('tourNext').onclick = () => {
+  if (tourStep < TOUR_LAST) { tourStep++; showTourStep(); return; }
+  if (!$('tourOk').checked) return;
+  lsSet('ders-recok', '1'); $('tourDlg').close();
+};
 $('tourSkip').onclick = () => { if (tourStep) { tourStep--; showTourStep(); } else $('tourDlg').close(); };
 $('tourDlg').addEventListener('close', () => lsSet('ders-tour', '1'));
 $('tourAgain').onclick = () => { closeSettings(); openTour(); };

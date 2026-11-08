@@ -1,5 +1,5 @@
 // önce internetten dener, olmazsa kayıtlı halini açar
-const CACHE = 'lecmic-v6';
+const CACHE = 'lecmic-v7';
 const CORE = [
   './',
   'index.html',
@@ -8,6 +8,7 @@ const CORE = [
   'css/app.css',
   'js/core.js',
   'js/i18n.js',
+  'js/sanitize.js',
   'js/translate.js',
   'js/transcript.js',
   'js/notes.js',

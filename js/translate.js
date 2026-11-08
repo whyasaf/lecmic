@@ -38,7 +38,8 @@ async function translate(text, target = L().lang, src = L().src || 'en') {
 const wordCache = new Map();
 // kelime kutusunun içi: anlam, cümledeki anlamsa küçük etiketi, diğer anlamlar, istenirse cümlenin çevirisi
 function meaningHTML(r, withSent) {
-  return '<div class="mm">' + esc(r.main) + (r.ctx ? ' <small>' + esc(T('bu cümlede')) + '</small>' : '') + '</div>'
+  const tag = r.ctx ? T('bu cümlede') : r.pos ? T(r.pos === 'verb' ? 'fiil olarak' : 'isim olarak') : '';
+  return '<div class="mm">' + esc(r.main) + (tag ? ' <small>' + esc(tag) + '</small>' : '') + '</div>'
     + (r.others.length ? '<div class="mo">' + esc(T('diğer: ') + r.others.join(', ')) + '</div>' : '')
     + (withSent && r.sent ? '<div class="ms">' + esc(r.sent) + '</div>' : '');
 }
@@ -48,23 +49,36 @@ async function translateWord(w, target, src = L().src || 'en') {
   return wordCache.get(k);
 }
 
-// kelimenin bu cümledeki anlamı. Google sözlüğünden kelimenin bütün anlamları alınır,
-// cümlenin çevirisinde hangisi geçiyorsa o seçilir. olmazsa düz anlamı döner
+// kelimenin bu cümledeki anlamı. Google sözlüğünden kelimenin bütün anlamları türlerine göre alınır,
+// cümlenin çevirisinde hangisi geçiyorsa o seçilir. geçmiyorsa (sözlükte o kelime yoksa) kelimenin türü
+// cümledeki önceki kelimeden tahmin edilir ve o türün en sık anlamı gösterilir. o da olmazsa düz anlamı
 const sensesCache = new Map(), sentCache = new Map();
 function wordSenses(w, target, src) {
   const k = src + '>' + target + '|' + w.toLowerCase();
   if (!sensesCache.has(k)) sensesCache.set(k, (async () => {
     try {
-      const g = await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=' + src + '&tl=' + target + '&dt=t&dt=bd&q=' + encodeURIComponent(w.toLowerCase()));
-      const j = await g.json();
-      const main = (j[0] || []).map(p => p[0]).join('').trim();
-      // j[1]: kelime türüne göre gruplar, her grubun ikinci elemanı anlamların listesi
-      const bd = (Array.isArray(j[1]) ? j[1] : []).flatMap(p => Array.isArray(p[1]) ? p[1] : []).filter(s => typeof s === 'string');
-      const senses = [...new Set([main, ...bd].map(s => s.trim()).filter(Boolean))];
-      return senses.length ? { main:main || senses[0], senses } : null;
+      // hl=en: kelime türleri her zaman İngilizce gelsin (noun, verb), türe göre seçerken lazım
+      const g = await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=' + src + '&tl=' + target + '&hl=en&dt=t&dt=bd&q=' + encodeURIComponent(w.toLowerCase()));
+      return parseSenses(await g.json());
     } catch { return null; }
   })());
   return sensesCache.get(k);
+}
+// j[0]: çeviri, j[1]: türe göre gruplar [tür, [anlamlar...], ...]
+function parseSenses(j) {
+  if (!Array.isArray(j)) return null;
+  const main = (Array.isArray(j[0]) ? j[0] : []).map(p => p && p[0]).join('').trim();
+  const groups = (Array.isArray(j[1]) ? j[1] : []).map(p => ({ pos:String(p && p[0] || ''), ws:(Array.isArray(p && p[1]) ? p[1] : []).filter(s => typeof s === 'string').map(s => s.trim()) })).filter(g => g.ws.length);
+  const senses = [...new Set([main, ...groups.flatMap(g => g.ws)].filter(Boolean))];
+  return senses.length ? { main:main || senses[0], senses, groups } : null;
+}
+// kelimenin cümledeki türünü önündeki kelimeden tahmin eder: "can't bear" fiil, "a bear" isim
+const BEFORE_VERB = new Set(['to', 'can', "can't", 'cannot', 'could', "couldn't", 'will', "won't", 'would', "wouldn't", 'shall', 'should', "shouldn't", 'may', 'might', 'must', "mustn't", 'do', "don't", 'does', "doesn't", 'did', "didn't", 'i', 'you', 'we', 'they', 'not', 'never', 'always', 'often', 'please', "let's"]);
+const BEFORE_NOUN = new Set(['a', 'an', 'the', 'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'some', 'any', 'no', 'every', 'each', 'of', 'another']);
+function guessPos(w, sentence) {
+  const words = String(sentence || '').toLowerCase().replace(/[’`]/g, "'").match(/[\p{L}']+/gu) || [];
+  const i = words.indexOf(w.toLowerCase()), prev = i > 0 ? words[i - 1] : '';
+  return BEFORE_VERB.has(prev) ? 'verb' : BEFORE_NOUN.has(prev) ? 'noun' : null;
 }
 function translateSentence(text, target, src) {
   const k = src + '>' + target + '|' + text;
@@ -103,8 +117,11 @@ async function wordInContext(w, sentence, target = L().lang, src = L().src || 'e
   const d = await wordSenses(w, target, src);
   if (!d) return { main:await translateWord(w, target, src), ctx:false, others:[], sent:'' };
   if (!sentTr && sentence && sentence.length <= 1200) { try { sentTr = await translateSentence(sentence, target, src); } catch {} }
-  const pick = sentTr ? pickSense(d.senses, sentTr, target) : null, main = pick || d.main;
-  return { main, ctx:!!pick, others:d.senses.filter(s => s !== main).slice(0, 4), sent:sentTr };
+  const pick = sentTr ? pickSense(d.senses, sentTr, target) : null;
+  // cümlede geçen anlam yoksa türden tahmin. "ayı" gibi yanlış bir en sık anlam yerine o türün ilk anlamı
+  const pos = !pick && guessPos(w, sentence), grp = pos && d.groups.find(g => g.pos === pos);
+  const main = pick || (grp && grp.ws[0]) || d.main;
+  return { main, ctx:!!pick, pos:!pick && grp ? pos : null, others:d.senses.filter(s => s !== main).slice(0, 4), sent:sentTr };
 }
 
 // çeviri sekmesi için Google: çeviri, algılanan dil ve tek kelimede türüne göre anlamlar (isim, fiil...)

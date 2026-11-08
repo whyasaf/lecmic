@@ -13,6 +13,9 @@ Kod düz JavaScript, HTML ve CSS. Dosyalar tarayıcıda olduğu gibi çalışır
 
 ## Sonuçlar
 - `git push` yayınlamak için yeterli; kurulum ve derleme hatası yok.
+- Testler için Vitest ve Playwright gerekiyor; bunlar kök klasörü etkilemesin diye `tests/` altında kendi
+  `package.json`'larıyla durur (kökte `package.json` olsaydı Vercel yayında `npm install` çalıştırırdı).
+  Birim testleri uygulama dosyalarını değiştirmeden, sitedeki sırayla jsdom içinde yükler.
 - Bilinen borç: global kapsam ve script sırası bağımlılığı. Sıra değişirse uygulama kırılabilir
   (örneğin `cards.js`, `settings.js`'ten sonra yüklenmeli). Kod 10 bin satıra yaklaşınca bu canı yakar.
 - Planlanan adım (beta sonrası): derleme adımı eklemeden `<script type="module">` ile ES modüllerine geçmek,
