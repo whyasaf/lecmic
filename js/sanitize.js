@@ -1,3 +1,4 @@
+// @ts-check
 // dışarıdan gelen veriyi temizleme. saf fonksiyonlar: ekrana dokunmaz, sadece girdi alıp temiz çıktı verir,
 // bu yüzden tests/unit altında tarayıcısız test edilir. kullandıkları: DOMPurify (vendor), esc, SRC, LANGS (core.js), T (i18n.js)
 
@@ -6,7 +7,7 @@
 const NOTE_TAGS = ['p', 'div', 'br', 'span', 'b', 'strong', 'i', 'em', 'u', 's', 'strike', 'sub', 'sup', 'mark', 'font', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'hr', 'input', 'a', 'code', 'pre'];
 function cleanHTML(html, doc) {
   html = String(html || '');
-  if (!window.DOMPurify) return esc(new DOMParser().parseFromString(html, 'text/html').body.textContent || '');
+  if (typeof DOMPurify === 'undefined') return esc(new DOMParser().parseFromString(html, 'text/html').body.textContent || '');
   if (doc) return DOMPurify.sanitize(html, { FORBID_TAGS:['style', 'form', 'input', 'button', 'textarea', 'select', 'iframe'] });
   const frag = DOMPurify.sanitize(html, { ALLOWED_TAGS:NOTE_TAGS, ALLOWED_ATTR:['style', 'type', 'checked', 'href', 'dir', 'color'], RETURN_DOM_FRAGMENT:true });
   // notlardaki tek giriş kutusu yapılacaklar kutusu

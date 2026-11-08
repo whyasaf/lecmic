@@ -1,0 +1,37 @@
+# Lecmic
+
+> Lecmic is a free, open-source web app for students. While a lecture is going on, it writes down what is said (live transcript) and translates every sentence, for example from English to Turkish. Notes, a PDF/Word reader, a word notebook, flashcards and summaries sit on the same screen. No account is needed and all data stays on the user's device.
+
+Lecmic, ders dinlerken konuşulanı canlı olarak yazıya döken ve her cümleyi Türkçeye çeviren ücretsiz, açık kaynak bir web uygulamasıdır. Hesap gerekmez, veriler kullanıcının cihazında kalır.
+
+- Website: https://lecmic.whyasaf.com/
+- App: https://lecmic.whyasaf.com/app
+- Source code (MIT): https://github.com/whyasaf/lecmic
+- Developer: Ömer Asaf Ak (whyasaf), whyasaf.wa@gmail.com
+- Status: beta, free
+
+## What it does
+
+- Live transcript and translation of a lecture, sentence by sentence (Chrome or Edge on a computer recommended)
+- Records the lecture audio; replay it later or download it as MP3
+- Turns an existing audio file into a transcript on the device (Whisper)
+- Opens PDF and Word files, also offline; hovering a word shows its meaning in that sentence, not only the first dictionary entry
+- Highlights, a notes page per lecture and per document, a translate box next to the notes
+- Word notebook and flashcards with spaced repetition
+- Section-by-section lecture summary, made on the device
+- Folders, drag and drop, one-file backup, installable as an app on phone and desktop
+- Interface in Turkish and English; translation into Turkish, English, French, Spanish and Urdu
+
+## Privacy
+
+Lecmic has no server-side database and no accounts, ads or tracking. Lectures, notes, recordings and documents are stored in the browser (IndexedDB). Only while the live transcript is on does audio go to the browser's speech recognition service (Google, via Chrome), and text being translated goes to a translation service (Chrome's built-in translator when available, otherwise Google Translate or MyMemory).
+
+- Privacy notice (KVKK), privacy policy and terms: https://lecmic.whyasaf.com/gizlilik
+
+## FAQ
+
+- Is it free? Yes. No account or card is needed.
+- Which browsers? Live transcript: Chrome or Edge on a computer. Notes, reading, flashcards and summaries work in every modern browser.
+- Offline? After the first visit, notes, PDF/Word reading, flashcards and summaries work offline. Live transcript and translation need internet.
+- Can data be lost? Clearing browser data removes it. A one-file backup is available in Settings, with a weekly reminder.
+- Recording a lecture: ask the lecturer for permission first.

@@ -1,9 +1,12 @@
+// @ts-check
 // kısa yardımcılar
+// any: öğenin türü (input, dialog...) sayfaya göre değişiyor, her çağrıda belirtmek yerine
+/** @type {(id: string) => any} */
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SR = /** @type {any} */ (window).SpeechRecognition || /** @type {any} */ (window).webkitSpeechRecognition;
 // iPad kendini Mac gibi tanıtıyor, dokunmatik olmasından ayırıyoruz
 const IS_MOBILE = /Android|iPhone|iPad|iPod/.test(navigator.userAgent) || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1);
 const IS_MAC = /Mac/.test(navigator.platform) && !IS_MOBILE, IS_WIN = /Win/.test(navigator.platform);
@@ -65,7 +68,7 @@ const VERSION = 'Beta 0.9.1';
 const MOD = IS_MAC ? '⌘' : 'Ctrl';
 if (IS_MAC) {
   document.querySelectorAll('kbd.mod').forEach(k => { k.textContent = '⌘'; });
-  document.querySelectorAll('[title*="Ctrl+"]').forEach(el => { el.title = el.title.replace('Ctrl+', '⌘'); });
+  document.querySelectorAll('[title*="Ctrl+"]').forEach((/** @type {HTMLElement} */ el) => { el.title = el.title.replace('Ctrl+', '⌘'); });
 }
 // ayarlardan ya da cihazdan "hareketi azalt"
 const reduceMotion = () => document.documentElement.dataset.motion === 'reduce' || matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -232,14 +235,14 @@ function idbDo(store, mode, fn) {
   return idb.then(db => !db ? undefined : new Promise(res => {
     try {
       const tx = db.transaction(store, mode), req = fn(tx.objectStore(store));
-      tx.oncomplete = () => res(req && req.result); tx.onerror = tx.onabort = () => res();
-    } catch { res(); }
+      tx.oncomplete = () => res(req && req.result); tx.onerror = tx.onabort = () => res(undefined);
+    } catch { res(undefined); }
   }));
 }
 function idbDeleteChunks(pred) {
   return idb.then(db => !db ? undefined : new Promise(res => {
     const tx = db.transaction('chunks', 'readwrite'), c = tx.objectStore('chunks').openCursor();
     c.onsuccess = () => { const cur = c.result; if (!cur) return; if (pred(cur.value)) cur.delete(); cur.continue(); };
-    tx.oncomplete = () => res(); tx.onerror = tx.onabort = () => res();
+    tx.oncomplete = () => res(undefined); tx.onerror = tx.onabort = () => res(undefined);
   }));
 }

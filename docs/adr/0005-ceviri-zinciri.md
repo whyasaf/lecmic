@@ -20,3 +20,5 @@ Aynı cümle ve kelime için istekler önbelleğe alınır.
 - `gtx` her an kapanabilir ya da aynı ağdan çok istek gelince (ör. aynı okul Wi-Fi'ı) geçici olarak engellenebilir.
   O zaman MyMemory'ye, o da dolarsa "(çeviri alınamadı)" mesajına düşülür; uygulama çökmez.
 - Kullanıcı sayısı artarsa kalıcı çözüm, küçük bir sunucu fonksiyonu üzerinden resmi bir API'ye geçmek.
+- Ne zaman harekete geçilecek: aynı okuldan birden çok "çeviri çalışmıyor" bildirimi gelirse. İlk adım kısa bir
+  bekleme ve yeniden deneme, kullanıcıya "çeviri servisi yoğun" uyarısı; sonra sunucu fonksiyonu.

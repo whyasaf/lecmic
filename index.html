@@ -6,6 +6,8 @@
 <title>Lecmic · Ders kaydı, canlı çeviri, notlar</title>
 <meta name="description" content="İngilizce dersi dinlerken yazısını ve Türkçesini anında oku. Notlar, PDF okuyucu, kelime kartları. Ücretsiz, hesap yok, veriler cihazında.">
 <link rel="canonical" href="https://lecmic.whyasaf.com/">
+<meta name="author" content="Ömer Asaf Ak">
+<meta name="robots" content="index, follow, max-image-preview:large">
 <!-- link paylaşınca çıkan önizleme -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Lecmic">
@@ -30,6 +32,120 @@
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preload" href="/vendor/fonts/instrument-serif-italic-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/landing.css">
+<!-- arama motorları ve yapay zekâ asistanları için yapılandırılmış veri. çalıştırılan bir betik değil, CSP'yi etkilemez -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebSite",
+   "@id": "https://lecmic.whyasaf.com/#site",
+   "url": "https://lecmic.whyasaf.com/",
+   "name": "Lecmic",
+   "inLanguage": [
+    "tr",
+    "en"
+   ],
+   "publisher": {
+    "@id": "https://lecmic.whyasaf.com/#yazar"
+   }
+  },
+  {
+   "@type": "WebApplication",
+   "@id": "https://lecmic.whyasaf.com/#app",
+   "name": "Lecmic",
+   "url": "https://lecmic.whyasaf.com/app",
+   "description": "Ders dinlerken konuşulanı canlı olarak yazıya döken ve Türkçeye çeviren ücretsiz web uygulaması. Notlar, PDF ve Word okuyucu, kelimenin cümledeki anlamı, kelime kartları ve ders özeti. Hesap gerekmez, veriler kullanıcının cihazında kalır.",
+   "applicationCategory": "EducationalApplication",
+   "operatingSystem": "Web (Chrome, Edge)",
+   "browserRequirements": "Canlı transkript için Chrome ya da Edge",
+   "inLanguage": [
+    "tr",
+    "en"
+   ],
+   "isAccessibleForFree": true,
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "TRY"
+   },
+   "featureList": [
+    "Canlı transkript ve çeviri",
+    "Ders kaydı ve MP3 olarak indirme",
+    "Ses dosyasından transkript (Whisper)",
+    "PDF ve Word okuyucu",
+    "Kelimenin cümledeki anlamı",
+    "Ders ve belge başına notlar",
+    "Aralıklı tekrarla kelime kartları",
+    "Cihazda ders özeti",
+    "Çevrimdışı çalışma, uygulama olarak kurulum"
+   ],
+   "screenshot": "https://lecmic.whyasaf.com/img/shots/tr-light-hero.webp",
+   "image": "https://lecmic.whyasaf.com/icons/og.jpg",
+   "license": "https://opensource.org/licenses/MIT",
+   "codeRepository": "https://github.com/whyasaf/lecmic",
+   "author": {
+    "@id": "https://lecmic.whyasaf.com/#yazar"
+   }
+  },
+  {
+   "@type": "Person",
+   "@id": "https://lecmic.whyasaf.com/#yazar",
+   "name": "Ömer Asaf Ak",
+   "alternateName": "whyasaf",
+   "email": "whyasaf.wa@gmail.com",
+   "url": "https://github.com/whyasaf"
+  },
+  {
+   "@type": "FAQPage",
+   "@id": "https://lecmic.whyasaf.com/#sss",
+   "inLanguage": "tr",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "Gerçekten ücretsiz mi?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Evet. Hesap açman ya da kart bilgisi vermen gerekmiyor. Lecmic açık kaynak, kodu GitHub'da herkese açık."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Hangi tarayıcıda çalışır?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Canlı transkript için bilgisayarda Chrome ya da Edge öneriyoruz. Notlar, PDF okuma, kartlar ve özet bütün güncel tarayıcılarda çalışır."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "İnternet olmadan kullanılır mı?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Bir kez açtıktan sonra notlar, PDF ve Word okuma, kartlar ve özet internetsiz çalışır. Canlı transkript ve çeviri için internet gerekir."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Verilerim kaybolur mu?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Veriler tarayıcında durduğu için tarayıcı verilerini silersen onlar da gider. Ayarlar'dan tek dosyalık yedek alabilirsin, Lecmic de haftada bir hatırlatır."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Dersi kaydetmek serbest mi?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Kaydetmeden önce hocadan izin al. Kayıtları yalnızca kendi çalışman için kullan, izinsiz paylaşma."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
 <script src="/js/site.js"></script>
 <script src="/js/landing.js" defer></script>
 </head>
@@ -75,7 +191,7 @@
         <svg viewBox="0 0 80 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4c4 18 20 32 62 33"/><path d="M58 29l9 8-10 6"/></svg></div>
       <div class="note n2" aria-hidden="true"><span data-l="tr">notların da burada</span><span data-l="en">your notes, too</span>
         <svg viewBox="0 0 70 50" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M60 4C52 30 34 42 6 44"/><path d="M14 36l-8 8 10 4"/></svg></div>
-      <div class="frame"><img data-shot="hero" width="2880" height="1800" fetchpriority="high" alt="Lecmic: solda dersler, ortada canlı transkript ve Türkçe çevirisi, sağda notlar" data-alt-en="Lecmic: lectures on the left, live transcript with translation in the middle, notes on the right"></div>
+      <div class="frame"><img data-shot="hero" width="2880" height="1800" fetchpriority="high" alt="Lecmic: solda dersler, ortada canlı transkript ve Türkçe çevirisi, sağda notlar" data-alt-en="Lecmic: lectures on the left, live transcript with translation in the middle, notes on the right"><noscript><img src="/img/shots/tr-light-hero.webp" width="2880" height="1800" alt="Lecmic: solda dersler, ortada canlı transkript ve Türkçe çevirisi, sağda notlar"></noscript></div>
     </div>
   </div>
 </section>
@@ -93,7 +209,7 @@
           <li><span data-l="tr">Hazır ses dosyasını yükle, yazıya dökülsün</span><span data-l="en">Upload an audio file and get its transcript</span></li>
         </ul>
       </div>
-      <div class="im mid rv"><div class="frame"><img data-shot="listen" width="1510" height="1544" loading="lazy" alt="Kayıt sürerken transkript ve çevirisi" data-alt-en="Transcript and translation during a recording"></div></div>
+      <div class="im mid rv"><div class="frame"><img data-shot="listen" src="/img/shots/tr-light-listen.webp" width="1510" height="1544" loading="lazy" alt="Kayıt sürerken transkript ve çevirisi" data-alt-en="Transcript and translation during a recording"></div></div>
     </div>
 
     <div class="row flip">
@@ -107,7 +223,7 @@
           <li><span data-l="tr">Tek tıkla kelime defterine ekle</span><span data-l="en">Save words to your notebook in one click</span></li>
         </ul>
       </div>
-      <div class="im mid tilt rv"><div class="frame"><img data-shot="read" width="1510" height="1662" loading="lazy" alt="PDF'te bir kelimenin cümledeki anlamı" data-alt-en="A word's meaning in its sentence, inside a PDF"></div></div>
+      <div class="im mid tilt rv"><div class="frame"><img data-shot="read" src="/img/shots/tr-light-read.webp" width="1510" height="1662" loading="lazy" alt="PDF'te bir kelimenin cümledeki anlamı" data-alt-en="A word's meaning in its sentence, inside a PDF"></div></div>
     </div>
 
     <div class="row">
@@ -121,7 +237,7 @@
           <li><span data-l="tr">Yazarken otomatik kaydedilir</span><span data-l="en">Saved as you type</span></li>
         </ul>
       </div>
-      <div class="im tall rv"><div class="frame"><img data-shot="notes" width="754" height="1544" loading="lazy" alt="Not sayfası ve çeviri kutusu" data-alt-en="Notes page and translation box"></div></div>
+      <div class="im tall rv"><div class="frame"><img data-shot="notes" src="/img/shots/tr-light-notes.webp" width="754" height="1544" loading="lazy" alt="Not sayfası ve çeviri kutusu" data-alt-en="Notes page and translation box"></div></div>
     </div>
 
     <div class="row flip">
@@ -136,8 +252,8 @@
         </ul>
       </div>
       <div class="im rv"><div class="pair">
-        <div class="frame"><img data-shot="cards" width="1120" height="932" loading="lazy" alt="Kelime kartı" data-alt-en="A flashcard"></div>
-        <div class="frame"><img data-shot="summary" width="754" height="1434" loading="lazy" alt="Ders özeti" data-alt-en="Lecture summary"></div>
+        <div class="frame"><img data-shot="cards" src="/img/shots/tr-light-cards.webp" width="1120" height="932" loading="lazy" alt="Kelime kartı" data-alt-en="A flashcard"></div>
+        <div class="frame"><img data-shot="summary" src="/img/shots/tr-light-summary.webp" width="754" height="1434" loading="lazy" alt="Ders özeti" data-alt-en="Lecture summary"></div>
       </div></div>
     </div>
 
@@ -152,7 +268,7 @@
           <li><span data-l="tr">Tek dosyalık yedek</span><span data-l="en">One-file backup</span></li>
         </ul>
       </div>
-      <div class="im mid rv"><div class="frame"><img data-shot="organize" width="918" height="1120" loading="lazy" alt="Klasörler ve dersler" data-alt-en="Folders and lectures"></div></div>
+      <div class="im mid rv"><div class="frame"><img data-shot="organize" src="/img/shots/tr-light-organize.webp" width="918" height="1120" loading="lazy" alt="Klasörler ve dersler" data-alt-en="Folders and lectures"></div></div>
     </div>
   </div>
 </section>

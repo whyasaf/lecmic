@@ -18,6 +18,9 @@ Kod düz JavaScript, HTML ve CSS. Dosyalar tarayıcıda olduğu gibi çalışır
   Birim testleri uygulama dosyalarını değiştirmeden, sitedeki sırayla jsdom içinde yükler.
 - Bilinen borç: global kapsam ve script sırası bağımlılığı. Sıra değişirse uygulama kırılabilir
   (örneğin `cards.js`, `settings.js`'ten sonra yüklenmeli). Kod 10 bin satıra yaklaşınca bu canı yakar.
-- Planlanan adım (beta sonrası): derleme adımı eklemeden `<script type="module">` ile ES modüllerine geçmek,
-  dosyaların başına `// @ts-check` ve JSDoc tipleri eklemek, kayıt durumları için küçük bir durum makinesi
-  (`idle → rec → paused`) yazmak.
+- Borcu azaltma, derleme adımı eklemeden:
+  1. **Başladı:** tip denetimi. `tests/tsconfig.json` ile `tsc` sadece başında `// @ts-check` olan dosyaları
+     denetler, CI'da çalışır. Şu an `core.js`, `sanitize.js`, `translate.js`. Diğer dosyalar teker teker eklenecek.
+  2. Sonra: `<script type="module">` ile ES modüllerine geçmek (bütün ortak değişkenlere dokunduğu için ayrı bir iş,
+     veri testleri ve CI hazır olduktan sonra).
+  3. Kayıt durumları için küçük bir durum makinesi (`idle → rec → paused`).

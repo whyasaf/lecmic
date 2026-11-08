@@ -1,0 +1,21 @@
+{
+  // uygulama derlenmiyor; tsc sadece başında // @ts-check olan dosyaları denetler (npm run typecheck).
+  // dosyalar düz betik olduğu için TypeScript hepsini aynı global kapsamda görür, sitedeki gibi
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "target": "es2022",
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "types": []
+  },
+  "files": [
+    "types/globals.d.ts",
+    "../js/core.js", "../js/i18n.js", "../js/sanitize.js", "../js/translate.js", "../js/transcript.js",
+    "../js/notes.js", "../js/record.js", "../js/lessons.js", "../js/import.js", "../js/summary.js",
+    "../js/doc.js", "../js/settings.js", "../js/cards.js", "../js/main.js"
+  ]
+}

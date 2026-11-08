@@ -97,12 +97,15 @@ Testler uygulamadan ayrı, kendi klasöründe (`tests/`) durur. Uygulamanın ken
 ```
 cd tests
 npm install
+npm run typecheck  # tip denetimi (başında // @ts-check olan dosyalar)
 npm test        # birim testleri (Vitest + jsdom)
 npm run e2e     # tarayıcıda smoke testi (Playwright, bilgisayardaki Chrome)
 ```
 
 - **Birim testleri:** Yedekten geri yükleme temizliği (`js/sanitize.js`): HTML içeren kimlikler, notlarda `<script>` ve olay öznitelikleri, `https:` ya da `javascript:` ses adresleri, bozuk dil kodları ve alan türleri. Bir de kelimenin cümledeki anlamı, Google'ın gerçek bir cevabıyla. Testler uygulamanın kendi dosyalarını değiştirmeden yükler.
+- **Kayıt testleri** (`unit/storage.test.js`, fake-indexeddb): açılışta derslerin yüklenmesi, sekme kapanırken yazılamamış değişikliklerin sonraki açılışta kurtarılması, bozuk kurtarma kaydının açılışı durdurmaması, eski localStorage verisinin IndexedDB'ye taşınması ve eski kopyanın ancak yazma başarılı olunca silinmesi.
 - **Smoke testi:** Ders oluştur, not yaz, beklemeden yenile; ders ve not yerinde mi. `vercel.json`'daki başlıklarla (CSP dahil) çalışan küçük bir sunucuya karşı koşar, sayfada hata ya da CSP ihlali olmamalı.
+- **CI:** `.github/workflows/test.yml` her push'ta ve PR'da tip denetimi, birim testleri ve smoke testini çalıştırır.
 
 ## Bilgisayarda çalıştırmak
 
@@ -121,6 +124,8 @@ index.html            tanıtım sayfası (/)
 app.html              uygulama (/app)
 gizlilik.html         KVKK, gizlilik, koşullar (/gizlilik). uygulamadaki panel metinleri buradan alır
 404.html              bulunamadı sayfası
+robots.txt, sitemap.xml  arama motorları için
+llms.txt              yapay zekâ asistanları için kısa tanım (GEO)
 css/landing.css       tanıtım ve gizlilik sayfalarının görünümü
 js/site.js            tanıtım ve gizlilik sayfalarında tema, dil ve yönlendirme (head içinde)
 js/landing.js         tanıtım ve gizlilik sayfalarında dil düğmesi, ekran görüntüleri

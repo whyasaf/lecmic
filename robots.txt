@@ -1,0 +1,6 @@
+# Lecmic: bütün arama motorları ve yapay zekâ asistanları açık
+User-agent: *
+Allow: /
+Disallow: /404
+
+Sitemap: https://lecmic.whyasaf.com/sitemap.xml

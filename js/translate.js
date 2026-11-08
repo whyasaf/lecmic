@@ -1,3 +1,4 @@
+// @ts-check
 // çeviri sırası: Chrome'un kendi çevirisi, olmazsa Google, o da olmazsa MyMemory
 let translator = null, translatorKey = null;
 function showEngine(why = '') {
@@ -76,7 +77,7 @@ function parseSenses(j) {
 const BEFORE_VERB = new Set(['to', 'can', "can't", 'cannot', 'could', "couldn't", 'will', "won't", 'would', "wouldn't", 'shall', 'should', "shouldn't", 'may', 'might', 'must', "mustn't", 'do', "don't", 'does', "doesn't", 'did', "didn't", 'i', 'you', 'we', 'they', 'not', 'never', 'always', 'often', 'please', "let's"]);
 const BEFORE_NOUN = new Set(['a', 'an', 'the', 'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'some', 'any', 'no', 'every', 'each', 'of', 'another']);
 function guessPos(w, sentence) {
-  const words = String(sentence || '').toLowerCase().replace(/[’`]/g, "'").match(/[\p{L}']+/gu) || [];
+  const words = /** @type {string[]} */ (String(sentence || '').toLowerCase().replace(/[’`]/g, "'").match(/[\p{L}']+/gu) || []);
   const i = words.indexOf(w.toLowerCase()), prev = i > 0 ? words[i - 1] : '';
   return BEFORE_VERB.has(prev) ? 'verb' : BEFORE_NOUN.has(prev) ? 'noun' : null;
 }

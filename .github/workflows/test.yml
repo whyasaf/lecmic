@@ -1,0 +1,45 @@
+# her push'ta ve PR'da testler. uygulamanın derleme adımı yok, bu sadece kontrol
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tests
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+      - run: npm ci
+      - name: Tip denetimi
+        run: npm run typecheck
+      - name: Birim testleri
+        run: npm test
+      # GitHub'ın Ubuntu makinelerinde Chrome kurulu geliyor, Playwright tarayıcı indirmeden onu kullanır
+      - name: Smoke testi
+        run: npm run e2e
+      - name: Hata olursa ekran görüntüleri
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests/test-results
+          retention-days: 7
