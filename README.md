@@ -30,7 +30,7 @@ Dersler İngilizce, bazen anlamıyorsun. Lecmic dersi kaydederken konuşulanı y
 - **PDF ve Word okuma:** Makaleyi aç, cümleye tıkla, çevirisini gör, renkli işaretle, notlarına ekle.
 - **Mikrofon testi:** Kayda başlamadan sesin gelip gelmediğine bak.
 - **Yedek ve dışa aktarma:** Yedek alıp başka cihazda geri yükle. Notları ya da dersin tamamını Word, PDF ya da TXT olarak indir.
-- **Uygulama gibi:** Bilgisayara ve telefona kurulur, internetsiz de açılır.
+- **Uygulama gibi:** Bilgisayara ve telefona kurulur. Bir kez açıldıktan sonra internetsiz de çalışır: dersler, notlar, kelimeler, kayıtları dinleme, PDF ve Word okuma. Canlı transkript, çeviri ve ses dosyasından transkript internet ister.
 - **Diller:** Konuşma dili İngilizce ya da Türkçe. Çeviri Türkçe, İngilizce, Fransızca, İspanyolca ya da Urduca. Arayüz Türkçe ya da İngilizce.
 
 ![PDF okuma](docs/ekran-2.jpg)
@@ -79,7 +79,7 @@ Lecmic sunucusuz bir web uygulaması: bütün iş tarayıcıda döner, derleme a
 - **Ses dosyasından transkript:** Whisper, Transformers.js ile bir Web Worker içinde (WebGPU, yoksa WASM).
 - **Çeviri:** Chrome'un yerleşik çevirmeni → Google → MyMemory.
 - **Güvenlik:** Kütüphaneler repoda, CSP, dışarıdan gelen HTML DOMPurify ile temizleniyor.
-- **Çevrimdışı:** Service worker, uygulama olarak kurulabilir (PWA).
+- **Çevrimdışı:** Service worker uygulamayı ve kütüphaneleri (PDF ve Word dahil) ilk açılışta önbelleğe alır; uygulama olarak kurulabilir (PWA).
 
 Kararların nedenleri ve bedelleri [docs/adr](docs/adr) altında:
 

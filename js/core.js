@@ -150,19 +150,25 @@ let dbLoaded;
 const DBReady = new Promise(r => { dbLoaded = r; });
 // açık olan ders
 const L = () => DB.lessons.find(l => l.id === DB.cur);
-// kaydetmeyi biraz geciktirir, peş peşe yazmasın. sadece son yazılandan farklı olan dersler yazılır
+// kaydetme. save(id) dersi "değişti" diye işaretler, biraz sonra sadece işaretli dersler yazılır (canlı kayıtta
+// her cümlede bütün dersleri JSON'a çevirmesin). saveNow() ise tam karşılaştırma yapar: ders değişimi, silme,
+// taşıma gibi önemli anlarda ve sayfa gizlenirken çağrılır, bir işaret kaçırılsa bile değişiklik orada yakalanır
 let saveT, IDB = null, saveErr = false;
-const written = new Map();
-function saveNow() {
+const written = new Map(), dirty = new Set();
+function saveNow(full = true) {
   clearTimeout(saveT);
   if (!DB) return;
   // IndexedDB yoksa (çok eski tarayıcı) eskisi gibi localStorage, ama hata artık yutulmuyor
-  if (!IDB) { try { localStorage.setItem('ders-v2', JSON.stringify(DB)); saveOk(); } catch (e) { saveFail(e); } return; }
-  const changed = [], ids = new Set(DB.lessons.map(l => l.id));
-  for (const l of DB.lessons) { const j = JSON.stringify(l); if (written.get(l.id) !== j) changed.push([l, j]); }
-  const gone = [...written.keys()].filter(k => k !== '#meta' && !ids.has(k));
+  if (!IDB) { dirty.clear(); try { localStorage.setItem('ders-v2', JSON.stringify(DB)); saveOk(); } catch (e) { saveFail(e); } return; }
+  const ids = new Set(DB.lessons.map(l => l.id)), changed = [];
+  const check = full === false ? [...dirty].map(id => DB.lessons.find(l => l.id === id)).filter(Boolean) : DB.lessons;
+  dirty.clear();
+  for (const l of check) { const j = JSON.stringify(l); if (written.get(l.id) !== j) changed.push([l, j]); }
+  const gone = full === false ? [] : [...written.keys()].filter(k => k !== '#meta' && !ids.has(k));
   const meta = JSON.stringify({ cur:DB.cur, folders:DB.folders });
   if (!changed.length && !gone.length && written.get('#meta') === meta && !legacyLS) return;
+  // yazma başarısız olursa bu dersler bir sonraki kayıtta yeniden denensin
+  const retry = e => { changed.forEach(([l]) => dirty.add(l.id)); saveFail(e); };
   try {
     const tx = IDB.transaction(['lessons', 'meta'], 'readwrite'), ls = tx.objectStore('lessons');
     changed.forEach(([l]) => ls.put(l, l.id));
@@ -173,11 +179,14 @@ function saveNow() {
       if (legacyLS) { legacyLS = false; try { localStorage.removeItem('ders-v2'); } catch {} }
       saveOk();
     };
-    tx.onerror = tx.onabort = () => saveFail(tx.error);
-  } catch (e) { saveFail(e); }
+    tx.onerror = tx.onabort = () => retry(tx.error);
+  } catch (e) { retry(e); }
 }
-const save = () => { clearTimeout(saveT); saveT = setTimeout(saveNow, 300); };
-addEventListener('pagehide', saveNow);
+const save = id => { if (DB) dirty.add(id || DB.cur); clearTimeout(saveT); saveT = setTimeout(() => saveNow(false), 300); };
+// sekme kapanırken başlayan yazma bitmeyebilir. sayfa gizlenince (sekme değişti, telefonda uygulamadan çıkıldı)
+// daha erken ve daha güvenilir bir fırsat var
+addEventListener('pagehide', () => saveNow());
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
 // kayıt başarısızsa kapanmayan kırmızı uyarı. sessizce veri kaybetmek yerine kullanıcı yedek alabilsin
 function saveFail(e) {
   console.error('kaydedilemedi', e);

@@ -57,7 +57,7 @@ function cdAnswer(ok) {
     // bilinmeyen kelime bu turun sonunda bir kez daha gelir
     if (!x.re) cd.q.push({ ...x, re:true });
   }
-  save(); renderVocab();
+  save(x.l.id); renderVocab();
   cd.i++;
   if (cd.i < cd.q.length) cdShow(); else cdEnd('finish');
 }

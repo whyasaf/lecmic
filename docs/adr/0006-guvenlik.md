@@ -15,12 +15,16 @@ basılan notlar vardı.
 - **DOMPurify:** Notlar (gösterirken, yapıştırırken, dışa aktarırken) ve Word belgesinin HTML çıktısı temizlenir.
 - **Yedekten geri yükleme:** Kimlikler `/^[a-z0-9]{1,40}$/i` ile, dil kodları bilinen listeyle, alan türleri tek
   tek doğrulanır. Ses yalnızca dosyanın içindeki `data:` adresinden alınır, dışarıya istek atılmaz.
-- **CSP (`vercel.json`):** Betik sadece kendi sitemizden ve (yazıya dökme için) `cdn.jsdelivr.net`'ten; satır içi
-  betik yok; bağlantılar sadece kullanılan çeviri ve model adreslerine; sayfa başka sitede çerçeve içine alınamaz.
+- **CSP (`vercel.json`):** Betik sadece kendi sitemizden ve (yazıya dökme için) jsDelivr'da yalnızca
+  `npm/@huggingface/transformers@3.5.1/` yolundan; jsDelivr'ın tamamına izin vermek, bir XSS durumunda oradaki
+  herhangi bir npm paketinin yüklenebilmesi demek (bilinen bir CSP atlatma yolu). Satır içi betik yok; bağlantılar
+  sadece kullanılan çeviri ve model adreslerine; sayfa başka sitede çerçeve içine alınamaz.
 
 ## Sonuçlar
 - Bir açık bulunsa bile CSP ikinci bir kilit olur.
-- Repo yaklaşık 2,5 MB büyüdü. PDF ve Word okuma internetsiz de çalışır.
+- Repo yaklaşık 2,5 MB büyüdü. Service worker bu dosyaları ilk açılışta önbelleğe alıyor (yaklaşık 2,4 MB, bir
+  kez); PDF ve Word okuma internetsiz de çalışır.
+- transformers.js'in sürümü değişirse CSP'deki yol da değişmeli, yoksa ses dosyasından transkript çalışmaz.
 - Kütüphane güncellemesi elle yapılır: yeni dosya indirilir, hash doğrulanır, `vendor/README.md` güncellenir.
 - Stil için `'unsafe-inline'` hâlâ açık (HTML'de `style` öznitelikleri var). Betik kadar riskli değil, ileride
   kaldırılabilir.

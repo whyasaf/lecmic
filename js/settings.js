@@ -180,7 +180,6 @@ $('wipeBtn').onclick = async () => {
   await idbDo('lessons', 'readwrite', s => s.clear()); await idbDo('meta', 'readwrite', s => s.clear());
   DB = null;
   Object.keys(localStorage).filter(k => k.startsWith('ders-') && k !== 'ders-ui' && k !== 'ders-theme').forEach(k => localStorage.removeItem(k));
-  removeEventListener('pagehide', saveNow);
   location.replace(location.pathname);
 };
 

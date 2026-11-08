@@ -11,7 +11,13 @@ sessizce duruyordu.
 ## Karar
 - Dersler IndexedDB'de `lessons` deposunda, her ders kendi kimliğiyle ayrı bir kayıt. Açık ders ve klasörler
   `meta` deposunda.
-- Kaydederken her dersin son yazılan hali hatırlanır, sadece değişen dersler yazılır.
+- `save(id)` dersi "değişti" diye işaretler; 300 ms sonra sadece işaretli dersler yazılır. Canlı kayıtta her
+  cümlede bütün dersleri JSON'a çevirmek dönem sonunda telefonu yorardı.
+- Güvenlik ağı: `saveNow()` bütün dersleri son yazılan halleriyle karşılaştırır. Ders değişimi, silme, taşıma gibi
+  önemli anlarda ve sayfa gizlenirken çağrılır, böylece işaretlenmesi unutulmuş bir değişiklik de kaybolmaz.
+- Sekme kapanırken başlayan IndexedDB yazması bitmeyebilir. Bu yüzden `pagehide`'ın yanında `visibilitychange`
+  (sayfa gizlenince) da kaydeder; bu olay daha erken gelir ve telefonda daha güvenilirdir.
+- Yazma başarısız olursa o dersler yeniden işaretlenir, bir sonraki kayıtta tekrar denenir.
 - Eski sürümün `localStorage` verisi ilk açılışta otomatik taşınır. Eski kopya ancak taşıma başarıyla yazılınca
   silinir.
 - Yazma başarısız olursa hata yutulmaz: ekranda kapanmayan bir uyarı ve "Hemen yedek al" düğmesi çıkar.

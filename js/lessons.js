@@ -98,7 +98,7 @@ function newRecItem(fid) {
 function moveTo(l, fid) {
   freshIds.add(l.id);
   if (fid) { l.folder = fid; folderOf(fid).open = true; } else delete l.folder;
-  save(); renderLessons();
+  save(l.id); renderLessons();
 }
 function moveMenu(btn, id) {
   const l = DB.lessons.find(x => x.id === id); if (!l) return;

@@ -141,14 +141,14 @@ $('sumGo').onclick = async () => {
   } catch (e) { console.warn(e); why = 'Chrome yapay zekâsı hata verdi: ' + (e.message || e.name); }
   if (!pts) pts = extractiveSummary(l.segs, secs);
   l.summary = { pts:pts.map(p => ({ s:p.s, en:p.en, t:null, g:p.g, i:p.i })), by, why, at:Date.now() };
-  save(); renderSummary(true);
+  save(l.id); renderSummary(true);
   if (trOn) {
     const src = l.src || 'en';
     for (const p of l.summary.pts) {
       try { p.t = p.en && l.lang === 'en' ? p.en : await translate(p.en || p.s, l.lang, p.en ? 'en' : src); } catch {}
       if (L() === l) renderSummary();
     }
-    save();
+    save(l.id);
   }
   summing = false; $('sumGo').disabled = false;
 };

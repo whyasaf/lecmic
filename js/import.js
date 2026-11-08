@@ -99,7 +99,7 @@ function stopImport(msg) {
 }
 async function translateSeg(lesson, seg, i) {
   try { seg.tr = await translate(seg.en, lesson.lang, lesson.src || 'en'); } catch { seg.tr = '(çeviri alınamadı)'; }
-  save(); if (L() === lesson) setTrText(i);
+  save(lesson.id); if (L() === lesson) setTrText(i);
 }
 $('impGo').onclick = async () => {
   const file = $('impFile').files[0];
@@ -141,7 +141,7 @@ $('impGo').onclick = async () => {
         lesson.segs.push(seg);
         if (trOn) { const i = lesson.segs.length - 1; tq = tq.then(() => translateSeg(lesson, seg, i)); }
       }
-      save(); if (L() === lesson) { renderSegments(); } renderLessons();
+      save(lesson.id); if (L() === lesson) { renderSegments(); } renderLessons();
       $('impProg').value = m.progress;
       $('impMsg').textContent = 'Yazıya dökülüyor: %' + Math.round(m.progress * 100);
       setStatus('Transkript %' + Math.round(m.progress * 100));

@@ -1,7 +1,8 @@
 # vendor
 
 Lecmic'in kullandığı kütüphaneler CDN'den değil buradan yüklenir. Böylece bir CDN'de sorun çıksa da kullanıcıya
-değiştirilmiş kod gitmez ve PDF/Word okuma internetsiz de çalışır. Dosyalara elle dokunulmaz, sadece aşağıdaki
+değiştirilmiş kod gitmez. Service worker bu dosyaları ilk açılışta önbelleğe aldığı için PDF/Word okuma, daha önce
+hiç belge açılmamış olsa bile internetsiz çalışır. Dosyalara elle dokunulmaz, sadece aşağıdaki
 kaynaktan aynen indirilir.
 
 | Dosya | Sürüm | Kaynak | Lisans |

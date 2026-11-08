@@ -148,13 +148,13 @@ function liveTranslate(en) {
 
 async function addSegment(text, t) {
   const l = L(), seg = { en:text, tr:null, t, rec:R.recId, star:false };
-  l.segs.push(seg); save();
+  l.segs.push(seg); save(l.id);
   renderSegments(); renderLessons();
   const i = l.segs.length - 1;
   if (!trOn) return;
   try { seg.tr = await translate(text, l.lang); }
   catch (e) { seg.tr = e.message === 'limit' ? '(günlük çeviri limiti doldu)' : '(çeviri alınamadı)'; }
-  save(); if (L() === l) setTrText(i);
+  save(l.id); if (L() === l) setTrText(i);
 }
 async function retranslateMissing() {
   const l = L();
@@ -163,21 +163,21 @@ async function retranslateMissing() {
     try { l.segs[i].tr = await translate(l.segs[i].en, l.lang); } catch { l.segs[i].tr = '(çeviri alınamadı)'; }
     if (L() === l) setTrText(i);
   }
-  save();
+  save(l.id);
 }
 $('lang').onchange = async () => {
   const l = L(); l.lang = $('lang').value; lsSet('ders-lang', l.lang);
   applyLangStyle(); trInterim = ''; showTrInt();
   $('engine').textContent = '...';
   await initTranslator(l.lang);
-  l.segs.forEach(s => s.tr = null); renderSegments(); save();
+  l.segs.forEach(s => s.tr = null); renderSegments(); save(l.id);
   if (trOn) {
     for (let i = 0; i < l.segs.length; i++) {
       if (L() !== l || l.lang !== $('lang').value) return;
       try { l.segs[i].tr = await translate(l.segs[i].en, l.lang); } catch { l.segs[i].tr = '(çeviri alınamadı)'; }
       if (L() === l) setTrText(i);
     }
-    save();
+    save(l.id);
   }
 };
 
@@ -186,7 +186,7 @@ $('src').onchange = () => {
   if (l.segs.length || R.state !== 'idle') { toast('Konuşma dilini değiştirmek için yeni bir ders aç'); $('src').value = l.src || 'en'; return; }
   l.src = $('src').value; lsSet('ders-src', l.src);
   if (l.lang === l.src) l.lang = l.src === 'tr' ? 'en' : 'tr';
-  applyLangStyle(); save();
+  applyLangStyle(); save(l.id);
   $('lang').onchange();
 };
 
@@ -238,7 +238,7 @@ async function showWord(el, seg) {
     const pm = $('pm'); if (pm) morph(pop, () => { pm.innerHTML = '<div class="tin">' + meaningHTML(r, false) + '</div>'; });
   } catch { meaning = '(çeviri alınamadı)'; const pm = $('pm'); if (pm) morph(pop, () => { pm.textContent = T(meaning); }); }
   $('pAdd').onclick = () => {
-    if (!known()) { l.vocab.push({ w:word, m:meaning, ex:seg ? seg.en : '' }); save(); renderVocab(); toast('Kelime defterine eklendi'); }
+    if (!known()) { l.vocab.push({ w:word, m:meaning, ex:seg ? seg.en : '' }); save(l.id); renderVocab(); toast('Kelime defterine eklendi'); }
     pop.hidden = true;
   };
 }

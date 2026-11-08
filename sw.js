@@ -1,5 +1,5 @@
 // önce internetten dener, olmazsa kayıtlı halini açar
-const CACHE = 'lecmic-v5';
+const CACHE = 'lecmic-v6';
 const CORE = [
   './',
   'index.html',
@@ -20,6 +20,9 @@ const CORE = [
   'js/cards.js',
   'vendor/purify.min.js',
   'vendor/lame.min.js',
+  'vendor/pdfjs/pdf.min.mjs',
+  'vendor/pdfjs/pdf.worker.min.mjs',
+  'vendor/mammoth.browser.min.js',
   'js/main.js',
   'icons/icon.svg',
   'icons/icon-192.png',
