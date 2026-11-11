@@ -83,7 +83,8 @@ function freshItem(fid) {
 }
 function addMenu(btn, fid) {
   popMenu(btn, [
-    [esc(T('PDF ya da Word ekle')), () => { addTo = fid; reattachFor = null; $('docFile').click(); }],
+    [esc(T('PDF, Word ya da fotoğraf ekle')), () => { addTo = fid; reattachFor = null; $('docFile').click(); }],
+    ...(IS_MOBILE ? [[esc(T('Fotoğraf çek')), () => { addTo = fid; reattachFor = null; $('camFile').click(); }]] : []),
     [esc(T('Yeni canlı kayıt')), () => newRecItem(fid)],
     [esc(T('Ses dosyasından transkript')), () => { if (R.state !== 'idle') { toast('Önce kaydı bitir'); return; } addTo = fid; $('impBtn').click(); }]
   ]);
@@ -142,7 +143,9 @@ async function renameFolder(fid) {
 // silme. önce sorulur, sonra dropLesson ile ses ve belge dosyalarıyla birlikte gider
 function dropLesson(l) {
   l.recs.forEach(r => { idbDo('audio', 'readwrite', s => s.delete(l.id + ':' + r.id)); urlCache.delete(l.id + ':' + r.id); });
-  if (l.doc) idbDo('audio', 'readwrite', s => s.delete(l.id + ':doc'));
+  // fotoğraf belgesinde her sayfa ayrı dosya, bir de tanınan yazı
+  if (l.doc) for (let i = 0; i < (l.doc.type === 'img' ? Math.max(1, l.doc.pages || 1) : 1); i++) idbDo('audio', 'readwrite', s => s.delete(docKey(l.id, i)));
+  if (l.doc && l.doc.type === 'img') idbDo('audio', 'readwrite', s => s.delete(l.id + ':ocr'));
   idbDeleteChunks(c => c.lesson === l.id);
   DB.lessons = DB.lessons.filter(x => x !== l);
 }
@@ -245,8 +248,8 @@ async function makeBackup(withAudio) {
     const key = l.id + ':' + r.id, blob = await idbDo('audio', 'readonly', s => s.get(key));
     if (blob) out.audio[key] = await blobToDataURL(blob);
   }
-  if (withAudio) for (const l of DB.lessons) if (l.doc) {
-    const key = l.id + ':doc', blob = await idbDo('audio', 'readonly', s => s.get(key));
+  if (withAudio) for (const l of DB.lessons) if (l.doc) for (let i = 0; i < (l.doc.type === 'img' ? Math.max(1, l.doc.pages || 1) : 1); i++) {
+    const key = docKey(l.id, i), blob = await idbDo('audio', 'readonly', s => s.get(key));
     if (blob) out.audio[key] = await blobToDataURL(blob);
   }
   download(new Blob([JSON.stringify(out)], { type:'application/json' }), 'lecmic-yedek-' + new Date().toISOString().slice(0, 10) + (withAudio ? '-sesli' : '') + '.json');

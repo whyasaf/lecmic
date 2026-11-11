@@ -138,3 +138,27 @@ describe('cleanBackup: sağlam yedek bozulmaz', () => {
     expect(b.folders[0]).toMatchObject({ id:'f1', title:'Fizik', open:true });
   });
 });
+
+describe('fotoğraf belgeleri', () => {
+  const IMG = 'data:image/webp;base64,UklGRhoAAABXRUJQ';
+  it('sayfa boyları sadece pozitif sayı çiftleri olabilir, sayfa sayısı boylardan gelir', () => {
+    const out = app.cleanLesson(lesson({ kind:'doc', doc:{ name:'Fotoğraflar', type:'img', pages:99, dims:[[1200, 700], ['a', 3], [-1, 5], [2400, 1760, 9], 'x', [800, 1e9]] } }));
+    expect(out.doc.type).toBe('img');
+    expect(out.doc.dims).toEqual([[1200, 700]]);
+    expect(out.doc.pages).toBe(1);
+  });
+  it('sayfa sayısı sınırlı, yedekten binlerce sayfa gelmez', () => {
+    const dims = Array.from({ length:1000 }, () => [10, 10]);
+    expect(app.cleanLesson(lesson({ kind:'doc', doc:{ name:'x', type:'img', dims } })).doc.pages).toBe(300);
+  });
+  it('her sayfanın fotoğrafı yedekten alınır, fazlası ve dışarıdan adresler alınmaz', () => {
+    const b = app.cleanBackup(backup([lesson({ kind:'doc', doc:{ name:'F', type:'img', dims:[[10, 10], [10, 10]] } })], {
+      audio:{ 'l1:doc':IMG, 'l1:doc.1':IMG, 'l1:doc.2':IMG, 'l1:doc.3':'https://evil.example/x.png' }
+    }));
+    expect(Object.keys(b.audio).sort()).toEqual(['l1:doc', 'l1:doc.1']);
+  });
+  it('PDF belgesinde ek sayfa anahtarı alınmaz', () => {
+    const b = app.cleanBackup(backup([lesson({ kind:'doc', doc:{ name:'a.pdf', type:'pdf' } })], { audio:{ 'l1:doc':DATA, 'l1:doc.1':IMG } }));
+    expect(Object.keys(b.audio)).toEqual(['l1:doc']);
+  });
+});

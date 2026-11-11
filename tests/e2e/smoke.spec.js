@@ -41,3 +41,27 @@ test('ders oluştur, not yaz, yenile: ders ve not yerinde', async ({ page }) => 
   await expect(tour).toBeHidden();
   expect(problems).toEqual([]);
 });
+
+// slayt fotoğrafı: açılır, yazısı cihazda tanınır (Tesseract, ilk seferde model jsDelivr'dan iner),
+// tanınan yazının cümlesine tıklanınca çeviri şeridi çıkar
+test('fotoğraf aç, yazısı tanınsın, cümlesi seçilsin', async ({ page }) => {
+  test.setTimeout(120000);
+  const problems = [];
+  page.on('pageerror', e => problems.push('hata: ' + e.message));
+  page.on('console', m => { if (/Content Security Policy/.test(m.text())) problems.push('CSP: ' + m.text()); });
+  await page.addInitScript(() => { localStorage.setItem('ders-tour', '1'); localStorage.setItem('ders-recok', '1'); });
+  await page.goto('/app');
+
+  await page.locator('#docFile').setInputFiles(new URL('./fixtures/slide.png', import.meta.url).pathname);
+  await expect(page.locator('.pg.img img')).toHaveCount(1);
+  await expect(page.locator('#docTotal')).toHaveText('1');
+
+  const layer = page.locator('.pg.img .textLayer.ocr');
+  await expect(layer).toContainText('Models of Memory', { timeout:90000 });
+  await expect(page.locator('#docOcr')).toBeHidden();
+
+  // "bear" kelimesinin bulunduğu cümle, satır sonuna rağmen tam gelmeli
+  await layer.locator('span', { hasText:/^bear/ }).click();
+  await expect(page.locator('#selbar .sbo')).toHaveText('Most people cannot bear long lists of unrelated facts for more than a few seconds.');
+  expect(problems).toEqual([]);
+});

@@ -16,6 +16,7 @@ Lecmic, ders dinlerken konuşulanı canlı olarak yazıya döken ve her cümleyi
 - Records the lecture audio; replay it later or download it as MP3
 - Turns an existing audio file into a transcript on the device (Whisper)
 - Opens PDF and Word files, also offline; hovering a word shows its meaning in that sentence, not only the first dictionary entry
+- Opens photos and screenshots of slides or the board; their text is recognized on the device (Tesseract) so words and sentences can be translated and highlighted like in a PDF
 - Highlights, a notes page per lecture and per document, a translate box next to the notes
 - Word notebook and flashcards with spaced repetition
 - Section-by-section lecture summary, made on the device

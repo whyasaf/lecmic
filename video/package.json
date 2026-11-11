@@ -1,0 +1,12 @@
+{
+  "name": "lecmic-video",
+  "private": true,
+  "type": "module",
+  "description": "Lecmic tanıtım videosu. Kare kare çizilir, ffmpeg ile MP4 olur. Yayına gitmez.",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.65.0"
+  }
+}

@@ -1,5 +1,5 @@
 // önce internetten dener, olmazsa kayıtlı halini açar
-const CACHE = 'lecmic-v8';
+const CACHE = 'lecmic-v9';
 const CORE = [
   './',
   'index.html',

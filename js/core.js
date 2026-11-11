@@ -10,6 +10,8 @@ const SR = /** @type {any} */ (window).SpeechRecognition || /** @type {any} */ (
 // iPad kendini Mac gibi tanıtıyor, dokunmatik olmasından ayırıyoruz
 const IS_MOBILE = /Android|iPhone|iPad|iPod/.test(navigator.userAgent) || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1);
 const IS_MAC = /Mac/.test(navigator.platform) && !IS_MOBILE, IS_WIN = /Win/.test(navigator.platform);
+// telefona özel seçenekler (Fotoğraf çek) sadece dokunmatik cihazda görünsün
+if (IS_MOBILE) document.documentElement.classList.add('touch');
 // çeviri dilleri
 const LANGS = { tr:'Türkçe', en:'English', fr:'Français', es:'Español', ur:'اردو (Urdu)' };
 // konuşulan diller: tanıma dili ve whisper'daki adı

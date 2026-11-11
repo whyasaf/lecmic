@@ -148,7 +148,7 @@ async function renderData() {
   let audio = 0, docs = 0;
   try {
     const all = await idbDo('audio', 'readonly', s => s.getAll()), keys = await idbDo('audio', 'readonly', s => s.getAllKeys());
-    (all || []).forEach((b, i) => { const n = (b && b.size) || 0; if (/:doc$/.test(keys[i])) docs += n; else audio += n; });
+    (all || []).forEach((b, i) => { const n = (b && b.size) || 0; if (/:doc(\.\d+)?$/.test(keys[i])) docs += n; else audio += n; });
     for (const c of (await idbDo('chunks', 'readonly', s => s.getAll())) || []) audio += (c.blob && c.blob.size) || 0;
   } catch {}
   const total = text + audio + docs, parts = [['Yazılar', text, 'p1'], ['Ses kayıtları', audio, 'p2'], ['Belgeler', docs, 'p3']];

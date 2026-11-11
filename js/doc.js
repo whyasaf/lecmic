@@ -1,4 +1,4 @@
-// belge okuma (PDF / Word)
+// belge okuma (PDF / Word / fotoğraf)
 // kütüphaneler repodaki vendor/ klasöründen gelir (bkz. vendor/README.md)
 const VENDOR = new URL('vendor/', document.baseURI).href;
 let PDFJS = null;
@@ -8,7 +8,15 @@ async function loadPdfjs() {
   return PDFJS;
 }
 const MKCOL = { y:'#f5c400', g:'#3dbb78', p:'#ee6fa0' };
-const DOC = { type:'', pdf:null, pages:[], scale:1, io:null, token:0 };
+const DOC = { type:'', pdf:null, pages:[], scale:1, io:null, token:0, urls:[], ocr:null };
+// fotoğraf belgeleri: her fotoğraf bir sayfa. ilk sayfa ':doc', sonrakiler ':doc.1', ':doc.2'... anahtarında
+const docKey = (id, i) => id + ':doc' + (i ? '.' + i : '');
+// fotoğraf sayfalarının taban genişliği (PDF sayfası gibi), yakınlaştırma bunun üstüne
+const PAGE_W = 800;
+// yazı tanıma (Tesseract, cihazda çalışır). küçük dosyalar vendor/'da; motor ve dil modeli jsDelivr'dan, sürümü sabit
+const TESS_CORE = 'https://cdn.jsdelivr.net/npm/tesseract.js-core@7.0.0';
+const TESS_LANG = lang => 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/' + lang + '@1.0.0/4.0.0_best_int';
+const OCR_V = 1;
 let reattachFor = null;
 
 function loadScript(src) {
@@ -54,7 +62,9 @@ function applyMarks() {
 function teardownDoc() {
   if (DOC.io) DOC.io.disconnect();
   if (DOC.pdf) { try { DOC.pdf.destroy(); } catch {} }
-  DOC.pdf = null; DOC.pages = []; DOC.type = '';
+  DOC.urls.forEach(u => URL.revokeObjectURL(u));
+  DOC.pdf = null; DOC.pages = []; DOC.type = ''; DOC.urls = []; DOC.ocr = null;
+  $('docPanel').dataset.dtype = ''; ocrShow('');
   $('docPages').innerHTML = ''; $('docTotal').textContent = '0'; $('docPage').value = '';
   if (window.CSS && CSS.highlights) ['y', 'g', 'p'].forEach(c => CSS.highlights.delete('lm-' + c));
   hideSelbar(); hideTip();
@@ -82,7 +92,10 @@ async function loadDoc() {
     return;
   }
   try {
-    if (l.doc.type === 'docx') await openDocx(blob, token); else await openPdf(blob, token);
+    if (l.doc.type === 'docx') await openDocx(blob, token);
+    else if (l.doc.type === 'img') await openImg(l, token);
+    else await openPdf(blob, token);
+    if (token === DOC.token) $('docPanel').dataset.dtype = DOC.type;
   } catch (e) {
     console.error(e);
     if (token === DOC.token) $('docPages').innerHTML = '<div class="empty" style="padding:20px">Belge açılamadı: ' + esc(e.message || e.name || '') + '</div>';
@@ -123,6 +136,180 @@ async function openDocx(blob, token) {
   $('docPages').appendChild(el);
   $('docTotal').textContent = '1'; $('docPage').value = 1;
   applyMarks();
+}
+// fotoğraf belgesi: sayfalar <img>, üstünde yazı tanımadan gelen görünmez yazı katmanı (PDF'teki gibi)
+async function openImg(l, token) {
+  const n = Math.max(1, l.doc.pages || 1), dims = l.doc.dims || [];
+  const ocr = await idbDo('audio', 'readonly', s => s.get(l.id + ':ocr'));
+  if (token !== DOC.token) return;
+  DOC.type = 'img'; DOC.ocr = ocr && ocr.v === OCR_V && Array.isArray(ocr.pages) ? ocr : { v:OCR_V, pages:[] };
+  DOC.scale = l.doc.scale || fitScale(PAGE_W);
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < n; i++) {
+    const blob = await idbDo('audio', 'readonly', s => s.get(docKey(l.id, i)));
+    if (token !== DOC.token) return;
+    const [nw, nh] = Array.isArray(dims[i]) ? dims[i] : [PAGE_W, PAGE_W * 1.33];
+    const el = document.createElement('div');
+    el.className = 'pg img'; el.dataset.p = i;
+    const pg = { el, blob, nw, nh, h:PAGE_W * nh / nw, done:false };
+    if (blob) {
+      const img = new Image(), url = URL.createObjectURL(blob);
+      DOC.urls.push(url);
+      img.src = url; img.alt = ''; img.draggable = false; img.loading = 'lazy'; img.decoding = 'async';
+      el.append(img);
+    } else el.innerHTML = '<div class="empty" style="padding:20px">' + esc(T('Bu sayfanın fotoğrafı bulunamadı')) + '</div>';
+    DOC.pages.push(pg); sizeImgPage(pg);
+    if (DOC.ocr.pages[i]) buildLayer(pg, DOC.ocr.pages[i]);
+    frag.appendChild(el);
+  }
+  $('docPages').appendChild(frag);
+  $('docTotal').textContent = n; $('docPage').value = 1;
+  applyMarks();
+  ocrRun(l.id, token);
+}
+function sizeImgPage(pg) {
+  pg.el.style.width = PAGE_W * DOC.scale + 'px'; pg.el.style.height = pg.h * DOC.scale + 'px';
+  const tl = pg.el.querySelector('.textLayer');
+  if (tl) tl.style.transform = 'scale(' + DOC.scale + ')';
+}
+// tanınan yazı: paragraflar <p>, her kelime bir <span>. yer ve boy taban birimde, katman topluca ölçeklenir.
+// kelime genişliği yazı tipine göre ölçülüp fotoğraftaki genişliğe uydurulur, seçim fotoğraftaki yazının üstüne otursun
+const measure = document.createElement('canvas').getContext('2d');
+function buildLayer(pg, d) {
+  const tl = document.createElement('div');
+  tl.className = 'textLayer ocr';
+  tl.style.width = PAGE_W + 'px'; tl.style.height = pg.h + 'px'; tl.style.transform = 'scale(' + DOC.scale + ')';
+  for (const para of d.p || []) {
+    const p = document.createElement('p');
+    for (const ln of para) {
+      const [, y0, , y1] = ln.b, fs = Math.max(4, y1 - y0);
+      measure.font = fs + 'px sans-serif';
+      ln.w.forEach(([t, x0, x1], k) => {
+        const sp = document.createElement('span');
+        sp.textContent = t + (k < ln.w.length - 1 ? ' ' : '');
+        const mw = measure.measureText(t).width || 1;
+        sp.style.cssText = 'left:' + x0 + 'px;top:' + y0 + 'px;font-size:' + fs + 'px;transform:scaleX(' + ((x1 - x0) / mw).toFixed(3) + ')';
+        p.append(sp);
+      });
+    }
+    tl.append(p);
+  }
+  const old = pg.el.querySelector('.textLayer'); if (old) old.remove();
+  pg.el.append(tl); pg.done = true;
+}
+// Tesseract'ın sonucunu sayfanın taban birimine çevirir. emin olmadığı kelimeler (fotoğraftaki leke, kenar) atlanır
+function ocrPage(data, pg) {
+  const f = PAGE_W / pg.nw, r = v => Math.round(v * f * 10) / 10, p = [];
+  for (const b of data.blocks || []) for (const par of b.paragraphs || []) {
+    const lines = [];
+    for (const ln of par.lines || []) {
+      const w = (ln.words || []).filter(x => x.text.trim() && x.confidence >= 35).map(x => [x.text.trim(), r(x.bbox.x0), r(x.bbox.x1)]);
+      if (w.length) lines.push({ b:[r(ln.bbox.x0), r(ln.bbox.y0), r(ln.bbox.x1), r(ln.bbox.y1)], w });
+    }
+    if (lines.length) p.push(lines);
+  }
+  return { p };
+}
+const ocrWorkers = {};
+function ocrWorker(lang) {
+  ocrWorkers[lang] ||= (async () => {
+    await loadScript(VENDOR + 'tesseract/tesseract.min.js');
+    return Tesseract.createWorker(lang, 1, {
+      workerPath:VENDOR + 'tesseract/worker.min.js', workerBlobURL:false, corePath:TESS_CORE, langPath:TESS_LANG(lang),
+      logger:m => { if (ocrState && /loading/.test(m.status) && m.progress < 1) ocrShow(T('Yazı tanıma hazırlanıyor') + ' %' + Math.round(m.progress * 100)); else if (ocrState && m.status === 'recognizing text') ocrShow(T('Yazı tanınıyor') + ' ' + ocrState + ' · %' + Math.round(m.progress * 100)); }
+    });
+  })().catch(e => { delete ocrWorkers[lang]; throw e; });
+  return ocrWorkers[lang];
+}
+// yazısı henüz tanınmamış sayfalar sırayla taranır, sonuç kaydedilir (bir sayfa bir kez taranır)
+let ocrState = '', ocrBusy = false;
+function ocrShow(t, err) {
+  const e = $('docOcr');
+  e.hidden = !t; e.textContent = t; e.classList.toggle('err', !!err);
+}
+async function ocrRun(lid, token) {
+  if (ocrBusy || token !== DOC.token || DOC.type !== 'img') return;
+  const l = DB.lessons.find(x => x.id === lid);
+  const todo = DOC.pages.map((_, i) => i).filter(i => !DOC.ocr.pages[i] && DOC.pages[i].blob);
+  if (!l || !todo.length) return;
+  const lang = (l.src || 'en') === 'tr' ? 'tur' : 'eng';
+  ocrBusy = true;
+  try {
+    ocrState = '1/' + todo.length; ocrShow(T('Yazı tanıma hazırlanıyor'));
+    const w = await ocrWorker(lang);
+    for (const [k, i] of todo.entries()) {
+      if (token !== DOC.token) return;
+      ocrState = (k + 1) + '/' + todo.length; ocrShow(T('Yazı tanınıyor') + ' ' + ocrState);
+      const pg = DOC.pages[i], { data } = await w.recognize(pg.blob, {}, { blocks:true, text:false });
+      if (token !== DOC.token) return;
+      DOC.ocr.pages[i] = ocrPage(data, pg);
+      await idbDo('audio', 'readwrite', s => s.put(DOC.ocr, lid + ':ocr'));
+      buildLayer(pg, DOC.ocr.pages[i]); applyMarks();
+    }
+    ocrShow('');
+  } catch (e) {
+    console.error('yazı tanıma', e);
+    if (token === DOC.token) { ocrShow(T('Yazı tanınamadı. Tekrar dene'), true); $('docOcr').onclick = () => { $('docOcr').onclick = null; ocrRun(lid, DOC.token); }; }
+  } finally { ocrBusy = false; ocrState = ''; }
+}
+// fotoğrafı küçültüp sıkıştırır: telefon fotoğrafı 4-8 MB, yazı okunur kalsın ama cihaz dolmasın.
+// küçük ekran görüntüsü (PNG) olduğu gibi kalır, yazısı keskin olsun
+async function prepImage(file) {
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation:'from-image' }); } catch { return null; }
+  const k = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+  if (k === 1 && file.type === 'image/png' && file.size < 1.5e6) { const d = [bmp.width, bmp.height]; bmp.close(); return { blob:file, dims:d }; }
+  const c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(bmp, 0, 0, c.width, c.height); bmp.close();
+  let blob = await new Promise(r => c.toBlob(r, 'image/webp', .88));
+  // Safari WebP yazamıyor
+  if (!blob || blob.type !== 'image/webp') blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .88));
+  return blob ? { blob, dims:[c.width, c.height] } : null;
+}
+// fotoğrafları bir belgenin sayfası olarak kaydeder. from: kaçıncı sayfadan başlanacağı (sonuna ekleme için)
+async function prepAll(files) {
+  const ok = [];
+  for (const [i, f] of files.entries()) {
+    setStatus(T('Fotoğraflar hazırlanıyor') + ' ' + (i + 1) + '/' + files.length);
+    const r = await prepImage(f);
+    if (r) ok.push(r);
+  }
+  setStatus('');
+  if (ok.length < files.length) toast(T('Bazı fotoğraflar açılamadı. iPhone fotoğrafıysa (HEIC) JPG olarak kaydedip tekrar dene'));
+  return ok;
+}
+const storeImages = async (l, files, from = 0) => putPages(l, await prepAll(files), from);
+async function putPages(l, ok, from = 0) {
+  if (!ok.length) return 0;
+  for (const [i, r] of ok.entries()) await idbDo('audio', 'readwrite', s => s.put(r.blob, docKey(l.id, from + i)));
+  l.doc.dims = (l.doc.dims || []).slice(0, from).concat(ok.map(r => r.dims));
+  l.doc.pages = l.doc.dims.length;
+  return ok.length;
+}
+// fotoğraflar çekildiği sıraya göre (slayt fotoğrafları sırayla gelsin)
+const byTime = fs => [...fs].sort((a, b) => a.lastModified - b.lastModified || a.name.localeCompare(b.name));
+// açık sayfayı saat yönünde döndürür. o sayfanın yazısı yeniden tanınır, üstündeki işaretler silinir
+async function rotatePage() {
+  if (DOC.type !== 'img') return;
+  const l = L(), i = Math.min(DOC.pages.length, Math.max(1, parseInt($('docPage').value) || 1)) - 1, pg = DOC.pages[i];
+  if (!pg || !pg.blob) return;
+  const bmp = await createImageBitmap(pg.blob), c = document.createElement('canvas');
+  c.width = bmp.height; c.height = bmp.width;
+  const x = c.getContext('2d'); x.translate(c.width, 0); x.rotate(Math.PI / 2); x.drawImage(bmp, 0, 0); bmp.close();
+  let blob = await new Promise(r => c.toBlob(r, 'image/webp', .9));
+  if (!blob || blob.type !== 'image/webp') blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .9));
+  await idbDo('audio', 'readwrite', s => s.put(blob, docKey(l.id, i)));
+  (l.doc.dims ||= [])[i] = [c.width, c.height];
+  const had = (l.marks || []).some(m => m.p === i);
+  l.marks = (l.marks || []).filter(m => m.p !== i);
+  DOC.ocr.pages[i] = null;
+  await idbDo('audio', 'readwrite', s => s.put(DOC.ocr, l.id + ':ocr'));
+  save(); renderMarks();
+  if (had) toast(T('Sayfa döndü, o sayfadaki işaretler kaldırıldı'));
+  const top = $('docBody').scrollTop;
+  await loadDoc(); $('docBody').scrollTop = top;
 }
 function fitScale(pageWidth) {
   const w = $('docBody').clientWidth;
@@ -165,6 +352,7 @@ function setScale(s) {
   L().doc.scale = DOC.scale; save();
   hideSelbar(); hideTip();
   if (DOC.type === 'docx') DOC.pages[0].el.style.zoom = DOC.scale;
+  else if (DOC.type === 'img') DOC.pages.forEach(sizeImgPage);
   else {
     DOC.pages.forEach(pg => { pg.el.innerHTML = ''; pg.done = false; pg.busy = false; sizePage(pg); });
     watchPages();
@@ -173,7 +361,21 @@ function setScale(s) {
 }
 $('docPlus').onclick = () => setScale(DOC.scale * 1.15);
 $('docMinus').onclick = () => setScale(DOC.scale / 1.15);
-$('docFit').onclick = () => { if (DOC.pages.length) setScale(DOC.type === 'pdf' ? fitScale(DOC.pages[0].page.getViewport({ scale:1 }).width) : 1); };
+$('docFit').onclick = () => { if (DOC.pages.length) setScale(DOC.type === 'pdf' ? fitScale(DOC.pages[0].page.getViewport({ scale:1 }).width) : DOC.type === 'img' ? fitScale(PAGE_W) : 1); };
+$('docRot').onclick = rotatePage;
+// fotoğraf belgesinin sonuna sayfa ekleme (telefonda kamerayla tek tek çekip eklemek için)
+$('docAddPg').onclick = () => { if (DOC.type === 'img') $('pgFile').click(); };
+$('pgFile').onchange = async () => {
+  const files = byTime([...$('pgFile').files].filter(f => docType(f) === 'img')), l = L();
+  $('pgFile').value = '';
+  if (!files.length || l.kind !== 'doc' || !l.doc || l.doc.type !== 'img') return;
+  const from = l.doc.pages || 1, n = await storeImages(l, files, from);
+  if (!n) return;
+  saveNow(); renderLessons();
+  await loadDoc();
+  $('docBody').scrollTop = DOC.pages[from] ? DOC.pages[from].el.offsetTop - 12 : 0;
+  toast(n + T(' sayfa eklendi'));
+};
 $('docBody').addEventListener('scroll', () => {
   hideTip();
   const st = $('docBody').scrollTop + 60;
@@ -326,6 +528,7 @@ function sentenceParts(node, off) {
   const pgEl = node.parentElement && node.parentElement.closest('.pg');
   if (!pgEl || !node.nodeValue.trim()) return null;
   const cc = columnCuts(pgEl), col = colOf(rectOf(node), cc), blk = x => x.parentElement.closest('p,li,h1,h2,h3,h4,h5,tr');
+  const ocr = !!pgEl.querySelector('.textLayer.ocr');
   const list = textNodesOf(pgEl).map(x => ({ ...x, r:rectOf(x.n) })).filter(x => x.r.width === 0 || colOf(x.r, cc) === col);
   const solid = list.filter(x => x.r.width && x.n.nodeValue.trim());
   const colL = Math.min(...solid.map(x => x.r.left)), colR = Math.max(...solid.map(x => x.r.right));
@@ -333,13 +536,15 @@ function sentenceParts(node, off) {
   // başlık gibi satırlar: yazı boyu ya da tipi değişiyor, ya da satır noktalamasız ve erken bitip alttaki büyük harfle başlıyor
   const heading = (a, b) => {
     const h = Math.max(a.r.height, b.r.height) / Math.min(a.r.height, b.r.height);
-    if (h > 1.15 || font(a.n) !== font(b.n)) return true;
+    // fotoğrafta satır kutusunun boyu harflere göre değişiyor (g, y, d), yazı boyu sayılmaz
+    if (!ocr && (h > 1.15 || font(a.n) !== font(b.n))) return true;
     return colR - a.r.right > (colR - colL) * .15 && !/[.!?:;,\-–]["'”’)\]]*\s*$/.test(text) && /^\s*["“(\[]?[A-Z0-9]/.test(b.n.nodeValue);
   };
   let text = '', prev = null;
   for (const x of list) {
     if (prev && x.n.nodeValue.trim()) {
-      if (blk(prev.n) !== blk(x.n) || x.r.top - prev.r.bottom > prev.r.height * .6 || (newLine(prev.r, x.r) && heading(prev, x))) text += '\n';
+      // fotoğrafta paragraflar yazı tanımadan <p> olarak geliyor, satır aralığına bakmaya gerek yok
+      if (blk(prev.n) !== blk(x.n) || (!ocr && x.r.top - prev.r.bottom > prev.r.height * .6) || (newLine(prev.r, x.r) && heading(prev, x))) text += '\n';
       else if (newLine(prev.r, x.r) && !/\s$/.test(text)) text += ' ';
     }
     x.start = text.length;
@@ -499,37 +704,63 @@ $('marksList').addEventListener('click', e => {
 
 // belge açma
 $('docOpen').onclick = () => { $('exportMenu').hidden = true; reattachFor = null; $('docFile').click(); };
-const docType = f => { const ext = ((f.name.match(/\.([^.]+)$/) || [])[1] || '').toLowerCase(); return ext === 'pdf' || ext === 'docx' ? ext : ''; };
+$('camOpen').onclick = () => { $('exportMenu').hidden = true; reattachFor = null; $('camFile').click(); };
+const IMG_EXT = /^(png|jpe?g|webp|gif|bmp|heic|heif|avif)$/;
+const docType = f => {
+  const ext = ((f.name.match(/\.([^.]+)$/) || [])[1] || '').toLowerCase();
+  if (ext === 'pdf' || ext === 'docx') return ext;
+  return /^image\//.test(f.type) || IMG_EXT.test(ext) ? 'img' : '';
+};
+const BAD_TYPE = 'Sadece PDF, Word (.docx) ya da fotoğraf açabilirim';
 // seçim penceresi kapatılınca + menüsünden seçilen ders bir sonrakine kalmasın
 $('docFile').addEventListener('cancel', () => { addTo = null; });
-$('docFile').onchange = async () => {
-  const files = [...$('docFile').files], f = files[0];
-  $('docFile').value = '';
+$('camFile').addEventListener('cancel', () => { addTo = null; });
+$('docFile').onchange = () => { const fs = [...$('docFile').files]; $('docFile').value = ''; addFiles(fs); };
+$('camFile').onchange = () => { const fs = [...$('camFile').files]; $('camFile').value = ''; addFiles(fs); };
+async function addFiles(files) {
+  const f = files[0];
   if (!f) { addTo = null; return; }
   const type = docType(f);
   if (reattachFor) {
-    if (!type) { toast('Sadece PDF ya da Word (.docx) açabilirim'); return; }
     const l = DB.lessons.find(x => x.id === reattachFor);
     reattachFor = null;
     if (!l) return;
-    await idbDo('audio', 'readwrite', s => s.put(f, l.id + ':doc'));
-    l.doc = { name:f.name, type, scale:l.doc && l.doc.scale };
+    // fotoğraf belgesinin fotoğrafları yeniden seçilir: hepsi birden, aynı sırayla
+    if (l.doc && l.doc.type === 'img') {
+      const imgs = byTime(files.filter(x => docType(x) === 'img'));
+      if (!imgs.length) { toast(T(BAD_TYPE)); return; }
+      if (!await storeImages(l, imgs)) return;
+    } else {
+      if (!type || type === 'img') { toast(T(BAD_TYPE)); return; }
+      await idbDo('audio', 'readwrite', s => s.put(f, l.id + ':doc'));
+      l.doc = { name:f.name, type, scale:l.doc && l.doc.scale };
+    }
     saveNow();
     if (DB.cur === l.id) loadDoc();
     return;
   }
   if (R.state !== 'idle') { addTo = null; toast('Önce kaydı bitir'); return; }
-  // birden çok belge seçilebilir, hepsi aynı dersin altına sırayla girer
-  const fid = targetFolder(), ok = files.filter(docType);
-  if (ok.length < files.length) toast('Sadece PDF ya da Word (.docx) açabilirim');
-  let first = null;
-  for (const [i, file] of ok.entries()) {
+  // birden çok belge seçilebilir, hepsi aynı dersin altına sırayla girer. birlikte seçilen fotoğraflar tek belge olur
+  const fid = targetFolder(), ok = files.filter(docType), imgs = byTime(ok.filter(x => docType(x) === 'img'));
+  if (ok.length < files.length) toast(T(BAD_TYPE));
+  let first = null, n = 0;
+  for (const [i, file] of ok.filter(x => docType(x) !== 'img').entries()) {
     const l = freshItem(fid);
     l.kind = 'doc'; l.title = file.name.replace(/\.[^.]+$/, ''); l.doc = { name:file.name, type:docType(file) }; l.marks = []; l.created = Date.now() + i;
     await idbDo('audio', 'readwrite', s => s.put(file, l.id + ':doc'));
-    first ||= l;
+    first ||= l; n++;
+  }
+  const prepared = imgs.length ? await prepAll(imgs) : [];
+  if (prepared.length) {
+    const l = freshItem(fid), one = imgs.length === 1;
+    l.kind = 'doc'; l.marks = []; l.created = Date.now() + n;
+    // kameradan gelen dosyanın adı "image.jpg" gibi anlamsız, o zaman tarih
+    const named = one && !/^(image|img|photo|foto|pxl|dsc)[\W_]?\d*\.\w+$/i.test(imgs[0].name);
+    l.title = named ? imgs[0].name.replace(/\.[^.]+$/, '') : (UI === 'en' ? 'Photos' : 'Fotoğraflar') + ' - ' + stamp();
+    l.doc = { name:named ? imgs[0].name : l.title, type:'img', pages:0, dims:[] };
+    await putPages(l, prepared); first ||= l; n++;
   }
   saveNow();
   if (first) switchLesson(first.id, true);
-  if (ok.length > 1) toast(ok.length + T(' belge eklendi'));
-};
+  if (n > 1) toast(n + T(' belge eklendi'));
+}

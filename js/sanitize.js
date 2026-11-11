@@ -36,14 +36,20 @@ function cleanLesson(l) {
     recs:arr(l.recs).filter(r => r && validId(r.id)).map(r => ({ id:r.id, dur:num(r.dur) || 0, mime:/^[\w.+-]+\/[\w.+-]+$/.test(r.mime) ? r.mime : 'audio/mpeg', name:typeof r.name === 'string' ? r.name.slice(0, 120) : undefined, ext:/^\.\w{1,5}$/.test(r.ext) ? r.ext : undefined }))
   };
   if (validId(l.folder)) out.folder = l.folder;
-  if (l.kind === 'doc' && l.doc && ['pdf', 'docx'].includes(l.doc.type)) {
+  if (l.kind === 'doc' && l.doc && ['pdf', 'docx', 'img'].includes(l.doc.type)) {
     out.kind = 'doc'; out.doc = { name:str(l.doc.name).slice(0, 200), type:l.doc.type, scale:num(l.doc.scale) || undefined };
+    // fotoğraf belgesi: sayfa sayısı ve her sayfanın boyu (iki pozitif sayı)
+    if (l.doc.type === 'img') {
+      const dims = arr(l.doc.dims).slice(0, MAX_PAGES).filter(d => Array.isArray(d) && d.length === 2 && d.every(x => num(x) > 0 && x < 20000)).map(d => [num(d[0]), num(d[1])]);
+      out.doc.dims = dims; out.doc.pages = Math.max(1, Math.min(MAX_PAGES, dims.length || num(l.doc.pages) || 1));
+    }
     out.marks = arr(l.marks).filter(m => m && validId(m.id)).map(m => ({ id:m.id, p:num(m.p) || 0, s:num(m.s) || 0, e:num(m.e) || 0, r:arr(m.r).filter(x => Array.isArray(x) && x.length === 2 && x.every(n => typeof n === 'number')), t:str(m.t), tr:str(m.tr), c:MARK_COLORS.includes(m.c) ? m.c : 'y' }));
   }
   if (l.summary && Array.isArray(l.summary.pts)) out.summary = { pts:l.summary.pts.filter(p => p && typeof p.s === 'string').map(p => ({ s:p.s, en:str(p.en), t:typeof p.t === 'string' ? p.t : null, g:num(p.g) || 0, i:num(p.i) || 0 })), by:l.summary.by === 'chrome' ? 'chrome' : 'local', why:str(l.summary.why), at:num(l.summary.at) || Date.now() };
   return out;
 }
 const MARK_COLORS = ['y', 'g', 'p'];
+const MAX_PAGES = 300;
 // yedeğin tamamı: temiz dersler, temiz klasörler ve sadece kalan kayıtlara ait, dosyanın içindeki (data:) sesler.
 // yedek değilse null
 function cleanBackup(j) {
@@ -54,7 +60,7 @@ function cleanBackup(j) {
     for (const r of l.recs) { const k = l.id + ':' + r.id; if (isData(src[k])) audio[k] = src[k]; }
     // sesi yedekte olmayan kayıt listede kalmasın
     l.recs = l.recs.filter(r => audio[l.id + ':' + r.id]);
-    const dk = l.id + ':doc'; if (isData(src[dk])) audio[dk] = src[dk];
+    if (l.doc) for (let i = 0; i < (l.doc.type === 'img' ? l.doc.pages : 1); i++) { const dk = l.id + ':doc' + (i ? '.' + i : ''); if (isData(src[dk])) audio[dk] = src[dk]; }
   }
   const folders = arr(j.db.folders).filter(f => f && validId(f.id)).map(f => ({ id:f.id, title:str(f.title, T('Adsız ders')).slice(0, 200), created:num(f.created) || Date.now(), open:!!f.open }));
   return { lessons, folders, audio };

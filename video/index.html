@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Lecmic tanıtım videosu</title>
+<link rel="stylesheet" href="video.css">
+</head>
+<body>
+<!-- video kare kare çizilir: render.mjs her kare için seek(t) çağırıp ekran görüntüsü alır.
+     tarayıcıda açınca da oynar (boşluk: durdur, oklar: ileri/geri) -->
+<div id="stage">
+  <div id="paper"><div id="rules"></div><div id="margin"></div></div>
+
+  <section class="sc" id="s-hook">
+    <h1 class="hk" id="hk1"></h1>
+    <div class="hk2"><h1 class="hk serif" id="hk2"></h1><p id="hk3"></p></div>
+  </section>
+
+  <section class="sc" id="s-logo">
+    <div id="wave"></div>
+    <div id="lockup">
+      <div id="tile"><svg viewBox="0 0 512 512"><g transform="rotate(-8 256 256) translate(271 241) scale(1.22) translate(-265 -250)"><path fill="#fff" d="M150 150A50 50 0 0 1 250 150V330H345A35 35 0 0 1 345 400H185A35 35 0 0 1 150 365Z"/><g stroke="#3a63e0" stroke-width="14" stroke-linecap="round"><path d="M178 150h44M178 185h44M178 220h44"/></g></g></svg></div>
+      <div id="word"></div>
+    </div>
+    <p id="tag"></p>
+  </section>
+
+  <section class="sc split" id="s-listen">
+    <div class="lab" id="l-lab"><div class="num">01</div><h2></h2><p></p></div>
+    <div class="cam" id="l-cam">
+      <div class="card" id="l-card">
+        <div class="ch"><i class="rec"></i><b id="l-rec"></b><span class="sp"></span><span class="pill">EN → TR</span><span id="l-time">23:40</span></div>
+        <div id="l-lines"></div>
+        <div class="foot"><div id="l-wave"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sc split" id="s-read">
+    <div class="lab" id="r-lab"><div class="num">02</div><h2></h2><p></p></div>
+    <div class="cam" id="r-cam">
+      <div class="pdf" id="r-pdf">
+        <div class="pk">PSY 101 · READING 3</div>
+        <h3>Models of Memory</h3>
+        <p id="r-p1">Memory is not a single store but a set of processes. Information moves from the senses into short-term memory.</p>
+        <p id="r-p2"></p>
+        <div class="tip" id="r-tip"><b>bear</b><div class="tm"><span id="r-mean">katlanmak</span><small id="r-ctx"></small></div><div class="to" id="r-oth"></div><div class="tb" id="r-add"></div></div>
+        <svg class="cursor" id="r-cur" viewBox="0 0 24 24"><path d="M4 2.5v17.2l4.6-4.4 3 6.7 3.1-1.4-3-6.6h6.4z" fill="#1b1f2a" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="chip" id="r-chip"></div>
+    </div>
+  </section>
+
+  <section class="sc split" id="s-notes">
+    <div class="lab" id="n-lab"><div class="num">03</div><h2></h2><p></p></div>
+    <div class="cam" id="n-cam">
+      <div class="card nt" id="n-card">
+        <div class="tbar"><b>B</b><i>I</i><u>U</u><span class="sep"></span><span class="ic">≡</span><span class="ic">☐</span><span class="sp"></span><span class="pill" id="n-pill"></span></div>
+        <div class="nb" id="n-body"></div>
+      </div>
+      <div class="card tbox" id="n-tr">
+        <div class="ch"><b class="tt" id="n-trh"></b><span class="sp"></span><span class="pill">EN → TR</span></div>
+        <div class="tin" id="n-in"></div><div class="tout" id="n-out"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sc split" id="s-cards">
+    <div class="lab" id="c-lab"><div class="num">04</div><h2></h2><p></p></div>
+    <div class="cam" id="c-cam">
+      <div class="deck" id="c-deck"></div>
+      <div class="cbtns"><span class="cb" id="c-again"></span><span class="cb ok" id="c-know"></span></div>
+      <div class="cprog"><i id="c-bar"></i></div>
+    </div>
+  </section>
+
+  <section class="sc" id="s-mont"></section>
+
+  <section class="sc" id="s-rcpt">
+    <h2 class="big" id="p-h"></h2>
+    <div class="slot"></div>
+    <div class="rcwrap"><div class="rc" id="p-rc"></div></div>
+    <div class="stamp" id="p-stamp"></div>
+  </section>
+
+  <section class="sc" id="s-end">
+    <div id="e-lock">
+      <div id="e-tile"><svg viewBox="0 0 512 512"><g transform="rotate(-8 256 256) translate(271 241) scale(1.22) translate(-265 -250)"><path fill="#fff" d="M150 150A50 50 0 0 1 250 150V330H345A35 35 0 0 1 345 400H185A35 35 0 0 1 150 365Z"/><g stroke="#3a63e0" stroke-width="14" stroke-linecap="round"><path d="M178 150h44M178 185h44M178 220h44"/></g></g></svg></div>
+      <div id="e-word"></div>
+    </div>
+    <p id="e-tag"></p>
+    <div id="e-url"><span id="e-urlt"></span><svg viewBox="0 0 300 16" preserveAspectRatio="none"><path id="e-line" pathLength="1" d="M3 11C60 5 120 4 170 7s95 6 127-2" fill="none" stroke="#3b6cf5" stroke-width="4" stroke-linecap="round"/></svg></div>
+    <p id="e-meta"></p>
+  </section>
+</div>
+<script src="video.js"></script>
+</body>
+</html>

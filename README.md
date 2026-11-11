@@ -28,6 +28,7 @@ Dersler İngilizce, bazen anlamıyorsun. Lecmic dersi kaydederken konuşulanı y
 - **Ses kaydı ve oynatıcı:** Ders MP3 olarak kaydedilir. Cümleye tıklayınca kaydın o anı çalar, hızlı dinleyebilirsin. Sekme yanlışlıkla kapanırsa kayıt kurtarılır.
 - **Ses dosyasından transkript:** Hazır bir kaydı yükle, tarayıcının içinde yazıya dökülsün.
 - **PDF ve Word okuma:** Makaleyi aç, cümleye tıkla, çevirisini gör, renkli işaretle, notlarına ekle.
+- **Fotoğraf ve ekran görüntüsü:** Slaytın ya da tahtanın fotoğrafını çek, ekran görüntüsünü aç. Birlikte seçilen fotoğraflar tek belge olur. Yazısı cihazda tanınır (Tesseract), sonra PDF gibi: kelimenin anlamı, cümle çevirisi, işaretleme.
 - **Mikrofon testi:** Kayda başlamadan sesin gelip gelmediğine bak.
 - **Yedek ve dışa aktarma:** Yedek alıp başka cihazda geri yükle. Notları ya da dersin tamamını Word, PDF ya da TXT olarak indir.
 - **Uygulama gibi:** Bilgisayara ve telefona kurulur. Bir kez açıldıktan sonra internetsiz de çalışır: dersler, notlar, kelimeler, kayıtları dinleme, PDF ve Word okuma. Canlı transkript, çeviri ve ses dosyasından transkript internet ister.
@@ -41,7 +42,7 @@ Dersler İngilizce, bazen anlamıyorsun. Lecmic dersi kaydederken konuşulanı y
 2. Soldan **+ Yeni ders** ile bir ders aç.
 3. **Kaydı başlat**'a bas, mikrofon iznini ver. Ders konuştukça yazı ve çevirisi gelir. Sağ tarafa not al.
 
-PDF ya da Word okumak, yeni kayıt açmak ya da hazır bir ses dosyasını yazıya dökmek için üstteki **+ Ekle**.
+PDF, Word ya da fotoğraf açmak, yeni kayıt açmak ya da hazır bir ses dosyasını yazıya dökmek için üstteki **+ Ekle**.
 
 **Uygulama olarak kurmak:** Windows'ta ve Mac'te adres çubuğunun sağındaki yükle simgesine bas. iPhone'da Safari → Paylaş → Ana Ekrana Ekle. Android'de Chrome menüsü → Uygulamayı yükle.
 
@@ -151,6 +152,7 @@ vercel.json           yayın ayarları ve güvenlik başlıkları (CSP)
 vendor/               kütüphaneler (bkz. vendor/README.md)
 docs/adr/             mimari karar kayıtları
 tests/                birim ve smoke testleri (yayına gitmez)
+video/                tanıtım videosu: kare kare çizilir, `cd video && npm install && npm run render` ile MP4 olur (yayına gitmez)
 ```
 
 ## Kullanılan kütüphaneler
